@@ -1,7 +1,7 @@
 #/usr/bin/python
 
 import argparse
-import configargparse
+import ConfigParser
 import numpy
 from hotcount import *
 
@@ -22,15 +22,15 @@ class stand_alone(object):
 		HtC = HotCount()
 		if self.analysis_type == "ALL":
 			self.analyse_result =HtC.analyse(self.design_file, self.file_path, self.filetype)
-			# self.stat_result = HtC.statistics()
+			self.stat_result = HtC.statistics()
+			print self.stat_result
 			print "muhahah"
-			print self.analyse_result
 		elif self.analysis_type == "analysis":
 			self.analyse_result = HtC.analyse(self.design_file, self.file_path, self.filetype)
-		# elif self.analysis_type == "stat":
-		# 	self.stat_result = HtC.statistics()
+		elif self.analysis_type == "stat":
+			self.stat_result = HtC.statistics()
 		else:
-			raise ValueError("you  have entered a false param. Param can only be either ALL, analysis or stat")
+			raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")
 
 
 
@@ -42,10 +42,13 @@ class stand_alone(object):
 
 if __name__ == '__main__':
 	
-	parser = configargparse.getArgumentParser()
-	parser.add_argument('design_file',help='the')
-	parser.add_argument('path', help='where the file are stored')
-	parser.add_argument('-t','--type', default='ALL')
-	parser.add_argument('-f','--filetype', default='FASTQ')
+	parser = argparse.ArgumentParser()
+	config = ConfigParser.SafeConfigParser()
+
+	parser.add_argument('--designfile',required=True,help='path to the design file, the design file is the file containing the variant')
+	parser.add_argument('path', help='where the sample file are stored')
+	parser.add_argument('-t','--type', default='ALL', help='type of analysis to be processed')
+	parser.add_argument('-f','--filetype', default='FASTQ', help='file type to process')
 	args = parser.parse_args()
-	hotcount_stda = stand_alone(args.design_file, args.path, args.type, args.filetype).choose_analysis() 
+	config.read(args.designfile)
+	hotcount_stda = stand_alone(config, args.path, args.type, args.filetype).choose_analysis() 
