@@ -26,7 +26,6 @@ class HotCount(object):
 				for extention in file_extentions : 
 					
 					file_list = glob2.glob(path+extention)
-					print file_list
 					if len(file_list) != 0 :
 						break
 				if len(file_list) == 0 :	 
@@ -50,14 +49,11 @@ class HotCount(object):
 									mut_number = mut_number+1
 								elif len(SeqUtils.nt_search(str(record.seq),str(design.reverse_complement())))>1: 
 									mut_number = mut_number+1 
-							print mut_number
 							mutation_number_by_var_val= mutation_number_by_var_val + mut_number
-							print mutation_number_by_var_val
 							#ipdb.set_trace()
 							mutation_number_file_variant.append([name,mutation_number_by_var_val])
 					self.analyse_results[file] = mutation_number_file_variant                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
 			
-				print self.analyse_results
 					
 			elif filetype == "BAM":
 				pass
