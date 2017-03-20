@@ -5,6 +5,7 @@ from Bio.Seq import Seq
 from Bio.Alphabet import generic_dna
 from Bio import SeqUtils
 import ipdb
+import pysam
 
 class HotCount(object):
 
@@ -31,7 +32,9 @@ class HotCount(object):
 				if len(file_list) == 0 :	 
 					raise Exception("the path is incorrect or the file extension"+ 
 						"is bad,in fact the program can't find the file ")
-
+			if filetype =="BAM":
+				 pysam.AlignmentFile("ex1.bam", "rb")
+				 
 
                                 
 				for file in file_list:
