@@ -12,7 +12,7 @@ class regex_seq_finder(object):
 		self.nuctype = "DNA"
 		self.find_subseq_result = []
 		self.complement = ""
-		self.reverse_list=""
+		self.reverse_str=""
 
 
 	def regex_complement(self, regex_subseq, nuctype="DNA"):
@@ -35,113 +35,126 @@ class regex_seq_finder(object):
 	def regex_reverse(self, regex_subseq, nuctype="DNA"):
 		print regex_subseq+ "muhhh"
 		if len(regex_subseq) == 0:
-			return self.reverse_list
-		regex_list = list(regex_subseq)		
+			return self.reverse_str
+		
 		# for i in reversed(regex_list):
 			# ipdb.set_trace()
-		i=regex_list[-1]
+		i=regex_subseq[-1]
+		print "beforet"+regex_subseq
+
 		print i
-		if i in IUPACData.ambiguous_dna_values or i == ".":
+		if i in IUPACData.ambiguous_dna_values:
 			print "test "+i
 
-	 		self.reverse_list += i
+	 		self.reverse_str += i
 				# ipdb.set_trace()
 
-	 		regex_list.pop()
-	 		if len(regex_list)>1:
-	 			print regex_list
-	 			regex_seq_finder.regex_reverse(self, "".join(regex_list), nuctype="DNA")
-
-
+	 		regex_subseq =regex_subseq[:-1]
+	 		if len(regex_subseq)>1:
+	 			# print regex_list
+	 			regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
+	 	print regex_subseq		
+	 	print self.reverse_str
 		if i == '}' :
+			group1=""
+			group2=""
 			# ipdb.set_trace()
-			if re.match(r".*(\(.*\))(\{.*\})$","".join(regex_list)):
+			if re.match(r".*(\(.*?\))(\{.*?\})$",regex_subseq):
 				# ipdb.set_trace()
-				group2 = re.match(r".*(\(.*\))(\{.*\})$","".join(regex_list)).group(2)
-				print group2	
-				group1 = re.match(r".*(\(.*\))(\{.*\})$","".join(regex_list)).group(1)
+				group2 = re.match(r".*(\(.*?\))(\{.*?\})$",regex_subseq).group(2)
+				print "aaaaaaa"	
+				group1 = re.match(r".*(\(.*?\))(\{.*?\})$",regex_subseq).group(1)
+				print group1
+			elif re.match(r".*([A-Z]{1})(\{.*?\})$",regex_subseq):
+				group2 = re.match(r".*([A-Z]{1})(\{.*?\})$",regex_subseq).group(2)
+				print "bbbbbbbbbbbbb"	
+				group1 = re.match(r".*([A-Z]{1})(\{.*?\})$",regex_subseq).group(1)
 
-			if re.match(r".*([A-Z]{1})(\{.*\})$","".join(regex_list)):
-				group2 = re.match(r".*([A-Z]{1})(\{.*\})$","".join(regex_list)).group(2)
-				print group2	
-				group1 = re.match(r".*([A-Z]{1})(\{.*\})$","".join(regex_list)).group(1)
+			elif re.match(r".*(\[.*\])(\{.*?\})$",regex_subseq):
+				group2 = re.match(r".*(\[.*?\])(\{.*?\})$",regex_subseq).group(2)
+				print "cccccccccccccccc"
+				group1 = re.match(r".*(\[.*?\])(\{.*?\})$",regex_subseq).group(1)
+			print regex_subseq
+			print "ahahah"+group1
+			print "ihihihi"+group2	
+			tmp_regex_grp2 = re.escape(group2)+'$'
+			tmp_regex_grp1 = re.escape(group1)+'$'
+			regex_subseq = re.sub(tmp_regex_grp2,'',regex_subseq)
+			regex_subseq = re.sub(tmp_regex_grp1+"$",'',regex_subseq)
 
-			if re.match(r".*(\[.*\])(\{.*\})$","".join(regex_list)):
-				group2 = re.match(r".*(\[.*\])(\{.*\})$","".join(regex_list)).group(2)
-				print group2	
-				group1 = re.match(r".*(\[.*\])(\{.*\})$","".join(regex_list)).group(1)	
-			for j in group2:
-				regex_list.pop()
-			for k in group1:
-				regex_list.pop()
-		 	self.reverse_list += group1+group2 
-
-		 	if len(regex_list)> 1:
-		 		# ipdb.set_trace()
-		 		# regex_list = self.remove_pattern(r"\{.*\}", regex_list)
-			 	regex_seq_finder.regex_reverse(self, "".join(regex_list), nuctype="DNA")
+		 	self.reverse_str += group1+group2 
+		 	print "inac"+regex_subseq
+		 	regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
 
 	 	if i == ')' :
-	 		group = re.match(r"(\(.*\))$","".join(regex_list)).group(1)
-			self.reverse_list += group
-			for i in group:
-				regex_list.pop()
+	 		group = re.match(r".*(\(.*?\))$",regex_subseq).group(1)
+			self.reverse_str += group
+			tmp_regex_grp = re.escape(group)+'$'
+			regex_subseq = re.sub(tmp_regex_grp,'',regex_subseq)
+			regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
+
 		if i == ']' :
-			if re.match(r".*(\[.* \]$)", "".join(regex_list)):
-				group = re.match(r".*(\[.* \])","".join(regex_list)).group(1)
-				self.reverse_list += group
-			for i in group:
-				regex_list.pop()
-		# if i == '*' :
-		# 	if re.match(r".*(\(.*\))(\*)$","".join(regex_list)):
-		# 		# ipdb.set_trace()
-		# 		group2 = re.match(r".*(\(.*\))(\*)$","".join(regex_list)).group(2)
-		# 		print group2	
-		# 		group1 = re.match(r".*(\(.*\))(\*)$","".join(regex_list)).group(1)
+			if re.match(r".*(\[.*?\])$", regex_subseq):
+				group = re.match(r".*(\[.*?\])",regex_subseq).group(1)
+				self.reverse_str += group
+				tmp_regex_grp = re.escape(group)+'$'
+				regex_subseq = re.sub(tmp_regex_grp,'',regex_subseq)
+				regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
 
-		# 	if re.match(r".*([A-Z]{1})(\{.*\})$","".join(regex_list)):
-		# 		group2 = re.match(r".*([A-Z]{1})(\*)$","".join(regex_list)).group(2)
-		# 		print group2	
-		# 		group1 = re.match(r".*([A-Z]{1})(\*)$","".join(regex_list)).group(1)
+	
+		if i == '*' :
+			if re.match(r".*(\(.*?\))(\*)$",regex_subseq):
+				# ipdb.set_trace()
+				group2 = re.match(r".*(\(.*?\))(\*)$",regex_subseq).group(2)
+				group1 = re.match(r".*(\(.*?\))(\*)$",regex_subseq).group(1)
 
-		# 	if re.match(r".*(\[.*\])(\{.*\})$","".join(regex_list)):
-		# 		group2 = re.match(r".*(\[.*\])(\*)$","".join(regex_list)).group(2)
-		# 		print group2	
-		# 		group1 = re.match(r".*(\[.*\])(\*)$","".join(regex_list)).group(1)	
-		# 	for j in group2:
-		# 		regex_list.pop()
-		# 	for k in group1:
-		# 		regex_list.pop()
-		#  	self.reverse_list += group1+group2 
-		#  	if len(regex_list)> 1:
+			elif re.match(r".*([A-Z]{1})(\*)$",regex_subseq):
+				group2 = re.match(r".*([A-Z]{1})(\*)$",regex_subseq).group(2)
+				group1 = re.match(r".*([A-Z]{1})(\*)$",regex_subseq).group(1)
+
+			elif re.match(r".*(\[.*?\])(\*)$",regex_subseq):
+				group2 = re.match(r".*(\[.*?\])(\*)$",regex_subseq).group(2)
+				group1 = re.match(r".*(\[.*\])(\*)$",regex_subseq).group(1)	
+
+			tmp_regex_grp2 = re.escape(group2)+'$'
+			tmp_regex_grp1 = re.escape(group1)+'$'
+			regex_subseq = re.sub(tmp_regex_grp2,'',regex_subseq)
+			regex_subseq = re.sub(tmp_regex_grp1,'',regex_subseq)
+			regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
+
+
+		 	self.reverse_str += group1+group2 
+
+
+		# if len(regex_list)> 1:
 		#  		# ipdb.set_trace()
 		#  		# regex_list = self.remove_pattern(r"\{.*\}", regex_list)
-		# 		regex_seq_finder.regex_reverse(self, "".join(regex_list), nuctype="DNA")
+		# 	regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
 
-		return self.reverse_list	
+		return self.reverse_str	
 
-	def remove_pattern(pattern, regexl):
-		if re.match(r".*(\(.*\))(pattern)$","".join(regexl)):
-			# ipdb.set_trace()
-			group2 = re.match(r".*(\(.*\))(pattern)$","".join(regexl)).group(2)
-			print group2	
-			group1 = re.match(r".*(\(.*\))(pattern)$","".join(regexl)).group(1)
+	# def remove_pattern(pattern, regexl):
+	# 	if re.match(r".*(\(.*\))(pattern)$","".join(regexl)):
+	# 		# ipdb.set_trace()
+	# 		group2 = re.match(r".*(\(.*\))(pattern)$","".join(regexl)).group(2)
+	# 		# print group2	
+	# 		group1 = re.match(r".*(\(.*\))(pattern)$","".join(regexl)).group(1)
 
-		if re.match(r".*([A-Z]{1})(\{.*\})$","".join(regexl)):
-			group2 = re.match(r".*([A-Z]{1})(pattern)$","".join(regexl)).group(2)
-			print group2	
-			group1 = re.match(r".*([A-Z]{1})(pattern)$","".join(regexl)).group(1)
+	# 	if re.match(r".*([A-Z]{1})(\{.*\})$","".join(regexl)):
+	# 		group2 = re.match(r".*([A-Z]{1})(pattern)$","".join(regexl)).group(2)
+	# 		# print group2	
+	# 		group1 = re.match(r".*([A-Z]{1})(pattern)$","".join(regexl)).group(1)
 
-		if re.match(r".*(\[.*\])(\{.*\})$","".join(regexl)):
-			group2 = re.match(r".*(\[.*\])(pattern)$","".join(regexl)).group(2)
-			print group2	
-			group1 = re.match(r".*(\[.*\])(pattern)$","".join(regexl)).group(1)	
-		for j in group2:
-			regexl.pop()
-		for k in group1:
-			regexl.pop()
-	 	self.reverse_list += group1+group2
-	 	return regexl
+	# 	if re.match(r".*(\[.*\])(\{.*\})$","".join(regexl)):
+	# 		group2 = re.match(r".*(\[.*\])(pattern)$","".join(regexl)).group(2)
+	# 		# print group2	
+	# 		group1 = re.match(r".*(\[.*\])(pattern)$","".join(regexl)).group(1)	
+	# 	for j in group2:
+	# 		regexl.pop()
+	# 	for k in group1:
+	# 		regexl.pop()
+	#  	self.reverse_str += group1+group2
+	#  	return self.reverse_str
 
 
 
@@ -186,8 +199,8 @@ class regex_seq_finder(object):
 
 if __name__ == '__main__':
 	print("test")
-	print(regex_seq_finder(object).regex_complement(r"AW{1,11}(CG){2,22}"))
+	# print(regex_seq_finder(object).regex_complement(r"AW{1,11}(CG){2,22}"))
 	# print(regex_seq_finder(object).find_subseq("ATCTTTTTATTTCGCGCGGGGAAA",r"AW{1,10}(CG){1,10}", True, False ))
-	val=regex_seq_finder(object).regex_reverse(r"AW{1,11}ACTTSS(CG){2,22}ACCTTA(CT))")
+	val=regex_seq_finder(object).regex_reverse(r"AW{1,11}AC*TTSS(CG){2,22}AAA(AT)")
 	print val 
-	print(regex_seq_finder(object).regex_complement(val))
+	# print(regex_seq_finder(object).regex_complement(val))
