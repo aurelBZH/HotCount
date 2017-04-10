@@ -70,12 +70,26 @@ class regex_seq_finder(object):
 		 	regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
 
 	 	if i == ')' :
-	 		group = re.match(r".*(\(.*?\))$",regex_subseq).group(1)
-			self.reverse_str += group
-			tmp_regex_grp = re.escape(group)+'$'
+	 		cpt=0
+	 		tmp_regex=""
+	 		list_regex = list(regex_subseq)
+	 		for j in reversed(list_regex):
+		 		ipdb.set_trace()
+	 			if j ==')':
+	 				cpt+=1
+	 			if j == '(':
+	 				cpt -=1
+	 			if cpt == 0:
+					regex_seq_finder.regex_reverse(self, tmp_regex, nuctype="DNA")
+	 				break
+	 			tmp_regex+j
+	 		ipdb.set_trace()	
+			self.reverse_str += "("
+			tmp_regex_grp = re.escape(tmp_regex)+'$'
 			regex_subseq = re.sub(tmp_regex_grp,'',regex_subseq)
-			regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
-
+			# regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
+		if i == '(':
+			self.reverse_str += ")"
 		if i == ']' :	
 			if re.match(r".*(\[.*?\])$", regex_subseq):
 				group = re.match(r".*(\[.*?\])",regex_subseq).group(1)
@@ -177,6 +191,6 @@ if __name__ == '__main__':
 # 	print("test")
 # 	# print(regex_seq_finder(object).regex_complement(r"AW{1,11}(CG){2,22}"))
 # 	# print(regex_seq_finder(object).find_subseq("ATCTTTTTATTTCGCGCGGGGAAA",r"AW{1,10}(CG){1,10}", True, False ))
-	val=regex_seq_finder().regex_reverse(r"TTSS(CG(TT))AA")
+	val=regex_seq_finder().regex_reverse(r"S(CG(TT))A")
 	print val 
 # 	# print(regex_seq_finder(object).regex_complement(val))
