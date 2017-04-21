@@ -22,39 +22,34 @@ class regex_seq_finder(object):
 				if nuctype == "DNA": 
 					complement_value = IUPACData.ambiguous_dna_complement[nt]
 					value = IUPACData.ambiguous_dna_values[complement_value]
-					if len(value) == 1: 
-						pattern += value
-					else: 
-						pattern += '[%s]' %value 
+					
+				if nuctype == "RNA":
+					complement_value = IUPACData.ambiguous_rna_complement[nt]
+					value = IUPACData.ambiguous_rna_values[complement_value]
+				if len(value) == 1: 
+					pattern += value
+				else: 
+					pattern += '[%s]' %value 
 			elif re.match(r"[^A-Z]", nt):
 				pattern += nt
 		self.complement=pattern	
 		return self.complement
 
-	def regex_reverse(self, regex_subseq, nuctype="DNA"):
-		print regex_subseq+ "muhhh"
+
+	def regex_reverse(self, regex_subseq):
 		if len(regex_subseq) == 0:
 			return self.reverse_str
 		
-		# for i in reversed(regex_list):
-			# ipdb.set_trace()
 		i=regex_subseq[-1]
-		print "beforet"+regex_subseq
-
-		print i
-		if re.match(r"[A-Z]",i) or i == ".":
-			print "test "+i
+		if re.match(r"[A-Z]",i) or i in [".", "|", "$", "^"]:
 	 		self.reverse_str += i
 	 		regex_subseq =regex_subseq[:-1]
- 			regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
-	 	print regex_subseq		
-	 	print self.reverse_str
+ 			regex_seq_finder.regex_reverse(self, regex_subseq)
 		if i == '}' :
 			# todoreverse group1
 			if re.match(r".*(\(.*?\))(\{.*?\})$",regex_subseq):
 				group2 = re.match(r".*(\(.*?\))(\{.*?\})$",regex_subseq).group(2)
 				group1 = re.match(r".*(\(.*?\))(\{.*?\})$",regex_subseq).group(1)
-				print group1
 			elif re.match(r".*(\.|[A-Z]{1})(\{.*?\})$",regex_subseq):
 				group2 = re.match(r".*(\.|[A-Z]{1})(\{.*?\})$",regex_subseq).group(2)
 				group1 = re.match(r".*(\.|[A-Z]{1})(\{.*?\})$",regex_subseq).group(1)
@@ -66,89 +61,93 @@ class regex_seq_finder(object):
 			tmp_regex_grp1 = re.escape(group1)+'$'
 			regex_subseq = re.sub(tmp_regex_grp2,'',regex_subseq)
 			regex_subseq = re.sub(tmp_regex_grp1+"$",'',regex_subseq)
-		 	self.reverse_str += group1+group2 
-		 	regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
+		 	self.reverse_str = regex_seq_finder.regex_reverse(self, group1)+group2 
+		 	regex_seq_finder.regex_reverse(self, regex_subseq)
 
 	 	if i == ')' :
-	 		cpt=0
-	 		tmp_regex=""
-	 		list_regex = list(regex_subseq)
-	 		for j in reversed(list_regex):
-		 		ipdb.set_trace()
-	 			if j ==')':
-	 				cpt+=1
-	 			if j == '(':
-	 				cpt -=1
-	 			if cpt == 0:
-					regex_seq_finder.regex_reverse(self, tmp_regex, nuctype="DNA")
-	 				break
-	 			tmp_regex+j
-	 		ipdb.set_trace()	
-			self.reverse_str += "("
-			tmp_regex_grp = re.escape(tmp_regex)+'$'
-			regex_subseq = re.sub(tmp_regex_grp,'',regex_subseq)
-			# regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
+	 		self.reverse_str += "("
+	 		regex_subseq = regex_subseq[:-1]
+	 	 	regex_seq_finder.regex_reverse(self, regex_subseq)
+
 		if i == '(':
 			self.reverse_str += ")"
+			regex_subseq = regex_subseq[:-1]
+	 	 	regex_seq_finder.regex_reverse(self, regex_subseq)
+
 		if i == ']' :	
 			if re.match(r".*(\[.*?\])$", regex_subseq):
 				group = re.match(r".*(\[.*?\])",regex_subseq).group(1)
 				self.reverse_str += group
 				tmp_regex_grp = re.escape(group)+'$'
 				regex_subseq = re.sub(tmp_regex_grp,'',regex_subseq)
-				regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
+				regex_seq_finder.regex_reverse(self, regex_subseq)
 
 	
 		if i == '*' :
 			if re.match(r".*(\(.*?\))(\*|\+)$",regex_subseq):
 				group2 = re.match(r".*(\(.*?\))(\*|\+)$",regex_subseq).group(2)
-				group1 = re.match(r".*(\(.*?\))(\*)$",regex_subseq).group(1)
+				group1 = re.match(r".*(\(.*?\))(\*|\+)$",regex_subseq).group(1)
 
 			elif re.match(r".*(\.|[A-Z]{1})(\*)$",regex_subseq):
 				group2 = re.match(r".*(\.|[A-Z]{1})(\*|\+)$",regex_subseq).group(2)
 				group1 = re.match(r".*(\.|[A-Z]{1})(\*|\+)$",regex_subseq).group(1)
 
 			elif re.match(r".*(\[.*?\])(\*)$",regex_subseq):
-				group2 = re.match(r".*(\[.*?\])(\*|\+|\+)$",regex_subseq).group(2)
+				group2 = re.match(r".*(\[.*?\])(\*|\+)$",regex_subseq).group(2)
 				group1 = re.match(r".*(\[.*\])(\*|\+)$",regex_subseq).group(1)	
 
 			tmp_regex_grp2 = re.escape(group2)+'$'
 			tmp_regex_grp1 = re.escape(group1)+'$'
 			regex_subseq = re.sub(tmp_regex_grp2,'',regex_subseq)
 			regex_subseq = re.sub(tmp_regex_grp1,'',regex_subseq)
-		 	self.reverse_str += group1+group2 
+		 	self.reverse_str = regex_seq_finder.regex_reverse(self, group1)+group2 
 
-			regex_seq_finder.regex_reverse(self, regex_subseq, nuctype="DNA")
-
+			regex_seq_finder.regex_reverse(self, regex_subseq)
 
 		return self.reverse_str	
 
-	# def remove_pattern(pattern, regexl):
-	# 	if re.match(r".*(\(.*\))(pattern)$","".join(regexl)):
-	# 		# ipdb.set_trace()
-	# 		group2 = re.match(r".*(\(.*\))(pattern)$","".join(regexl)).group(2)
-	# 		# print group2	
-	# 		group1 = re.match(r".*(\(.*\))(pattern)$","".join(regexl)).group(1)
+	def verify_regex(self,regex, nuctype = "DNA"):
+		cpt_parenthesis = 0
+		cpt_bracket = 0 
+		cpt_brace = 0
+		if nuctype == "DNA":
+			nuc = IUPACData.ambiguous_dna_values
+		elif nuctype == "RNA":
+			nuc = IUPACData.ambiguous_rna_values	
 
-	# 	if re.match(r".*([A-Z]{1})(\{.*\})$","".join(regexl)):
-	# 		group2 = re.match(r".*([A-Z]{1})(pattern)$","".join(regexl)).group(2)
-	# 		# print group2	
-	# 		group1 = re.match(r".*([A-Z]{1})(pattern)$","".join(regexl)).group(1)
+		for i in regex:
+			if i in nuc or  i in [ "{", "}", "(", ")", "*", ",", "+", "-", "^","[", "]","$","!", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+				if i  == "(":
+					cpt_parenthesis += 1
+					continue
+				if i ==")":
+					cpt_parenthesis -= 1
+				if i == "[":
+					cpt_bracket +=1
+					continue 
+				if i == "]":
+					cpt_bracket -=1
+				if i == "{":
+					cpt_brace += 1
+					continue
+				if i == "}":
+					cpt_brace -= 1
 
-	# 	if re.match(r".*(\[.*\])(\{.*\})$","".join(regexl)):
-	# 		group2 = re.match(r".*(\[.*\])(pattern)$","".join(regexl)).group(2)
-	# 		# print group2	
-	# 		group1 = re.match(r".*(\[.*\])(pattern)$","".join(regexl)).group(1)	
-	# 	for j in group2:
-	# 		regexl.pop()
-	# 	for k in group1:
-	# 		regexl.pop()
-	#  	self.reverse_str += group1+group2
-	#  	return self.reverse_str
+				if cpt_brace != 0 :
+					print i
+					if i not in ["0","1","2","3","4","5","6","7","8","9",","]:
+						raise Exception("malformed regular expression")
+				if cpt_bracket != 0: 
+					if i not in nuc and i != "-":
+						raise Exception("problem between bracket")
+			else : 
+				raise Exception ("false symbol in the regular expression")
+		if cpt_bracket !=0 or cpt_brace !=0 or cpt_parenthesis !=0:
+					raise Exception("anormal number of bracket brace or parenthesis")
 
 
 
-	def find_subseq(self, sequence, regex, number_of_match, position_of_match, nuctype="DNA", overlap=False):
+	def find_subseq(self, sequence, regex, number_of_match, position_of_match, match, nuctype="DNA", overlap=False):
 		self.sequence = sequence	
 		self.nuctype = nuctype
 		self.regex_subseq = regex	
@@ -173,11 +172,16 @@ class regex_seq_finder(object):
 			elif re.match(r"[^A-Z]", nt):
 				pattern += nt 
 		self.find_subseq_result.append(pattern)
-		if number_of_match == True :
-			number_subseq = 0 
+
+		if number_of_match == True:
+			self.find_subseq_result.append(len(re.findall(pattern, self.sequence,overlap)))
+			return self.find_subseq_result
+
+		if match == True :
+			match_result = False
 			if len(re.findall(pattern, self.sequence,overlap))>0 :
-				number_subseq+=1 
-			self.find_subseq_result.append(number_subseq)
+				match_result =True
+			self.find_subseq_result.append(match_result)
 			return self.find_subseq_result 
 
 		if position_of_match == True:
@@ -186,11 +190,29 @@ class regex_seq_finder(object):
 				self.find_subseq_result.append(match.start())
 			return self.find_subseq_result
 
+	
+	def regex_reverse_complement(self, regex, nuctype="DNA"):
+		self.verify_regex(regex,nuctype = nuctype)
+		reverse_regex = self.regex_reverse(regex)
+		
+		return self.regex_complement(reverse_regex, nuctype=nuctype)
+
+
+
 
 if __name__ == '__main__':
 # 	print("test")
 # 	# print(regex_seq_finder(object).regex_complement(r"AW{1,11}(CG){2,22}"))
 # 	# print(regex_seq_finder(object).find_subseq("ATCTTTTTATTTCGCGCGGGGAAA",r"AW{1,10}(CG){1,10}", True, False ))
-	val=regex_seq_finder().regex_reverse(r"S(CG(TT))A")
-	print val 
+	# regex1 = r"AW{1,10}(CG){1,10}"
+	# rev = regex_seq_finder().regex_reverse_complement(regex1, nuctype="DNA")
+	# print rev 
+	# print regex_seq_finder().find_subseq("ATCTTTTTATTTCGCGCGGGGAAA",regex1, True, False )
+	print regex_seq_finder().find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False)
+	assert_equal(regex_seq_finder().find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False), ["ATCT{1,12}", "test"])
+
+	# print regex_seq_finder().regex_reverse(val)
 # 	# print(regex_seq_finder(object).regex_complement(val))
+	print regex_seq_finder().verify_regex(r"ATC[CG]{1,11}")
+	# print regex_seq_finder().regex_reverse_complement("ATC{1,11}")
+	# print regex_seq_finder().regex_reverse_complement("AUCUCCCC", nuctype="RNA")

@@ -34,28 +34,148 @@ def test_bracecase(reg):
 	assert reg.regex_reverse(r"A[CG]{1,8}") == "[CG]{1,8}A", "brace after bracket"
 	reg.__init__()
 
-@pytest.mark.xfail
+# @pytest.mark.xfail
 def test_parenthesis(reg):
 	reg.__init__()
 	assert reg.regex_reverse(r"TA(AC)CT")=="TC(CA)AT","first test on parenthesis "
 	
 	reg.__init__()
-	assert reg.regex_reverse(r"A(TG)*C") == "C(GT)*A", "test star plus parenthesis"
+	# assert reg.regex_reverse(r"A(TG)*C") == "C(GT)*A", "test star plus parenthesis"
 	reg.__init__()
-	assert reg.regex_reverse(r"(AC|BW)")=="(CA|WB)", "parenthesis plus pipe"
+	assert reg.regex_reverse(r"(AC|BW)")=="(WB|CA)", "parenthesis plus pipe"
 	reg.__init__()
-	assert reg.regex_reverse(r"(AC|BW(GG(AC)(CC)))") == "(CA|WB(GG(CA)(CC)))", " imbricated parenthesis"
+	assert reg.regex_reverse(r"(AC|BW(GG(AC)(CC)))") == "(((CC)(CA)GG)WB|CA)", "(CA|WB(GG(CA)(CC)))imbricated parenthesis"
 	reg.__init__()
 	assert reg.regex_reverse(r"C(TG){5,8}") == "(GT){5,8}C"
 
 
 def test_othersymbol(reg):
 	reg.__init__()
-	assert reg.regex_reverse(r"^ATCG") == "^GCTA", " simple test "
+	assert reg.regex_reverse(r"^ATCG") == "GCTA^", " simple test "
+
+
+def test_verify_regex_simple_DNA(reg):
+	with pytest.raises(Exception) as excinfo:
+		reg.verify_regex("djgfkGDOLgeuz")
+	excinfo.match(r"false symbol in the regular expression")
+def test_verify_regex_DNA(reg):
+	reg.verify_regex("ATC")
+def test_verify_regex_DNA(reg):
+	with pytest.raises(Exception) as excinfo:
+		reg.verify_regex("ATC{AA}")
+	excinfo.match(r"malformed regular expression")
+
+def test_verify_regex_DNA(reg):
+	# with pytest.raises(Exception) as excinfo:
+	reg.verify_regex("ATC{1,11}")
+	# excinfo.match(r"malformed regular expression")
+
+def test_verify_regex_DNA_min(reg):
+	with pytest.raises(Exception) as excinfo:
+		reg.verify_regex("atc")
+	excinfo.match(r"false symbol in the regular expression")
+
+def test_verify_regex_DNA_brace(reg):
+	with pytest.raises(Exception) as excinfo:
+		reg.verify_regex("ATC{A,2}")
+	excinfo.match(r"malformed regular expression")
+
+def test_verify_regex_RNA(reg):
+	with pytest.raises(Exception) as excinfo:
+		reg.verify_regex("ATG", nuctype = "RNA")
+	excinfo.match(r"false symbol in the regular expression")
+
+def test_verify_regex_RNA(reg):
+	with pytest.raises(Exception) as excinfo:
+		reg.verify_regex(r"AT(ACC)CCT", nuctype = "RNA")
+	excinfo.match(r"false symbol in the regular expression")	
+
+def test_verify_regexDNA_bracket(reg):
+		reg.verify_regex(r"AT[AC]CCT", nuctype = "DNA")
+
+def test_verify_regex_RNA(reg):
+	reg.verify_regex("AUG", nuctype = "RNA")
+
+def test_find_subseq3(reg):
+	with pytest.raises(AssertionError) as excinfo:
+		assert_equal(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False), ["ATCT{1,12}",0])
+	excinfo
+
+def test_regex_complement(reg):
+	assert reg.regex_complement("ATCG") == "TAGC", "simple DNA complement"
+
+def test_regex_complement_brace(reg):
+	assert reg.regex_complement(r"A[TG]*C") == "T[AC]*G", "simple brace case "
+
+def test_regex_complement_bracket(reg):
+	assert reg.regex_complement(r"AW{1,11}A") == "T[AT]{1,11}T", "bracket case"
+
+def test_regex_complement_bracket(reg):
+	assert reg.regex_complement(r"AC{4,20}G{11,22}") == "TG{4,20}C{11,22}", "double bracket case"
+
+def test_regex_complement_bracket(reg):
+	assert reg.regex_complement(r"(AC|BW(GG(AC)(CC)))") == "(TG|[ACG][AT](CC(TG)(GG)))", "double parenthesis case"
+
+def test_regex_complement_RNA(reg):	
+	assert reg.regex_complement(r"AUCG", nuctype="RNA") == "UAGC", "simple RNA test"
+
+def test_regex_reverse_complement1(reg):
+	assert reg.regex_reverse_complement(r"ATCCT") == "AGGAT" 
+
+def test_regex_reverse_complement2(reg):
+	assert reg.regex_reverse_complement(r"ATC{1,10}CT") == "AGG{1,10}AT" 
+
+def test_regex_reverse_complement3(reg):
+	assert reg.regex_reverse_complement(r"AT[GA]CCT") == "AGG[CT]AT" 
+
+def test_regex_reverse_complement4(reg):
+	assert reg.regex_reverse_complement(r"AT(ACC)CCT") == "AGG(GGT)AT" 
+
+def test_find_subseq(reg):
+	assert diff(reg.find_subseq("ATCTTTTTATTTCGCGCGGGGAAA",r"AW{1,10}(CG){1,10}", True, False, False), ['A[AT]{1,10}(CG){1,10}', 1]) == 0
+
+def test_find_subseq2(reg):
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATC", True, False, False), ["ATC", 3]) == 0 	
+
+def test_find_subseq2(reg):
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATC", False, True, False), ['ATC', 0, 8, 18]) == 0
+
+def test_find_subseq2(reg):
+	assert diff (reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATC", False, False, True), ["ATC", True]) == 0 	
+
+
+def test_find_subseq3(reg):
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", True, False, False), ["ATCT{1,12}", 3]) == 0 	
+
+
+
+def test_find_subseq3(reg):
+	tmp = reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, False, True)
+	assert diff(tmp, ["ATCT{1,12}", False])== 0 	
+
+def test_find_subseq3(reg):
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, False, True), ["ATCT{1,12}", True]) == 0 	
+
+def test_find_subseq4(reg):
+	assert diff (reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", True, False, False), ["ATCT{1,12}", 3]) == 0 	
+
+def test_find_subseq4(reg):
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False), ["ATCT{1,12}", 0, 8, 18]) == 0
+
+def test_find_subseq4(reg):
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, False, True),["ATCT{1,12}", True]) == 0 	
+
+
+def diff(list1, list2):
+    c = set(list1).union(set(list2))
+    d = set(list1).intersection(set(list2))
+    return len(list(c - d))
+
+
 
 @pytest.fixture
 def reg():
 	return python_Bio_Regexp.regex_seq_finder()
 	
-	
-	
+
+
