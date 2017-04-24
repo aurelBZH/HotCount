@@ -1,5 +1,7 @@
 import pytest
-from hotCount_remastered import python_Bio_Regexp 
+from hotCount_remastered import python_Bio_Regexp
+from datadiff.tools import assert_equal 
+from datadiff import diff
 
 # @pytest.mark.xfail
 
@@ -137,33 +139,33 @@ def test_find_subseq(reg):
 def test_find_subseq2(reg):
 	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATC", True, False, False), ["ATC", 3]) == 0 	
 
-def test_find_subseq2(reg):
+def test_find_subseq2b(reg):
 	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATC", False, True, False), ['ATC', 0, 8, 18]) == 0
 
-def test_find_subseq2(reg):
+def test_find_subseq2t(reg):
 	assert diff (reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATC", False, False, True), ["ATC", True]) == 0 	
 
 
 def test_find_subseq3(reg):
-	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", True, False, False), ["ATCT{1,12}", 3]) == 0 	
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", True, False, False), ["ATCT{1,12}", 2]) == 0 	
 
 
 
-def test_find_subseq3(reg):
+def test_find_subseq3b(reg):
 	tmp = reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, False, True)
-	assert diff(tmp, ["ATCT{1,12}", False])== 0 	
+	assert diff(tmp, ["ATCT{1,12}", True])== 0 	
 
-def test_find_subseq3(reg):
-	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, False, True), ["ATCT{1,12}", True]) == 0 	
-
-def test_find_subseq4(reg):
-	assert diff (reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", True, False, False), ["ATCT{1,12}", 3]) == 0 	
+def test_find_subseq3t(reg):
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"AT(CT){1,12}", False, False, True), ["AT(CT){1,12}", True]) == 0 	
 
 def test_find_subseq4(reg):
-	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False), ["ATCT{1,12}", 0, 8, 18]) == 0
+	assert diff (reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"AT(CT){1,12}", True, False, False), ["AT(CT){1,12}", 2]) == 0 	
 
-def test_find_subseq4(reg):
-	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, False, True),["ATCT{1,12}", True]) == 0 	
+def test_find_subseq4b(reg):
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"AT(CT){1,12}", False, True, False), ["AT(CT){1,12}", 0, 8]) == 0
+
+def test_find_subseq4t(reg):
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"AT(CT){1,12}", False, False, True),["AT(CT){1,12}", True]) == 0 	
 
 
 def diff(list1, list2):

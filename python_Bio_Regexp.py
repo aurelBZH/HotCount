@@ -2,6 +2,8 @@
 import re
 from Bio.Data import IUPACData
 import ipdb
+import scypi 
+
 
 class regex_seq_finder(object):
 	"""docstring for regex_seq_finder"""
@@ -198,7 +200,13 @@ class regex_seq_finder(object):
 		return self.regex_complement(reverse_regex, nuctype=nuctype)
 
 
-
+class fischer_exact_test(object):
+	"""docstring for fischer_exact_test"""
+	def __init__(self, arg):
+		super(fischer_exact_test, self).__init__()
+		self.arg = arg
+		
+	def 
 
 if __name__ == '__main__':
 # 	print("test")
