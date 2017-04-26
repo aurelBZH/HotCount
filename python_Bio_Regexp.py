@@ -2,7 +2,7 @@
 import re
 from Bio.Data import IUPACData
 import ipdb
-import scypi 
+import scipy 
 
 
 class regex_seq_finder(object):
@@ -118,7 +118,7 @@ class regex_seq_finder(object):
 			nuc = IUPACData.ambiguous_rna_values	
 
 		for i in regex:
-			if i in nuc or  i in [ "{", "}", "(", ")", "*", ",", "+", "-", "^","[", "]","$","!", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+			if i in nuc or  i in [ "{", "}", "(", ")",".", "*", ",", "+", "-", "^","[", "]","$","!", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
 				if i  == "(":
 					cpt_parenthesis += 1
 					continue
@@ -200,13 +200,10 @@ class regex_seq_finder(object):
 		return self.regex_complement(reverse_regex, nuctype=nuctype)
 
 
-class fischer_exact_test(object):
-	"""docstring for fischer_exact_test"""
-	def __init__(self, arg):
-		super(fischer_exact_test, self).__init__()
-		self.arg = arg
-		
-	def 
+
+
+
+
 
 if __name__ == '__main__':
 # 	print("test")

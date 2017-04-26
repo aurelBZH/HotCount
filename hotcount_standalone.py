@@ -19,22 +19,31 @@ class stand_alone(object):
 		self.stat_result = ""
 
 	def choose_analysis(self):
-		HtC = HotCount()
 		if self.analysis_type == "ALL":
-			self.analyse_result =HtC.analyse(self.design_file, self.file_path, self.filetype)
-			self.stat_result = HtC.statistics()
-			print self.stat_result
-			print "muhahah"
+			self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
+			self.stat_result = statistics()
+
 		elif self.analysis_type == "analysis":
-			self.analyse_result = HtC.analyse(self.design_file, self.file_path, self.filetype)
+			self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
 		elif self.analysis_type == "stat":
-			self.stat_result = HtC.statistics()
+			self.stat_result = statistics()
 		else:
 			raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")
 
 
 
+def analysis(tmp_filetype, tmp_path, tmp_design_file):
 
+	if tmp_filetype == "FASTQ":
+		FQanalyse = analysisFQ()
+		FQanalyse.get_file(tmp_path)
+		analyse_result = FQanalyse.count_read(tmp_design_file)
+		print analyse_result
+	elif tmp_filetype == "BAM":
+		BAManalyse = analysisBAM()
+		BAManalyse.get_file(self.file_path)
+		analyse_result = BAManalyse.count_read(tmp_design_file)
+	return analyse_result	
 
 		
 
@@ -47,8 +56,11 @@ if __name__ == '__main__':
 
 	parser.add_argument('--designfile',required=True,help='path to the design file, the design file is the file containing the variant')
 	parser.add_argument('path', help='where the sample file are stored')
-	parser.add_argument('-t','--type', default='ALL', help='type of analysis to be processed')
+	parser.add_argument('-t','--analysistype', default='ALL', help='type of analysis to be processed')
 	parser.add_argument('-f','--filetype', default='FASTQ', help='file type to process')
 	args = parser.parse_args()
 	config.read(args.designfile)
-	hotcount_stda = stand_alone(config, args.path, args.type, args.filetype).choose_analysis() 
+	print config
+	hotcount_stda = stand_alone(config, args.path, args.analysistype, args.filetype)
+	hotcount_stda.choose_analysis()
+	print hotcount_stda.analyse_result
