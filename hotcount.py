@@ -126,7 +126,7 @@ class analysisBAM(analysis):
 		for file in self.file_list:
 			samfile = pysam.AlignmentFile(file)
 			self.analyse_results[file] = {}
-			mutation_number_file_variant = []
+			mutation_number_file_variant = {}
 
 			for name, design in design_dict.iteritems():
 				mutation_number_by_var_val = 0       
@@ -138,20 +138,23 @@ class analysisBAM(analysis):
 							mut_number = mut_number+1 
 				mutation_number_by_var_val= mutation_number_by_var_val + mut_number
 					#ipdb.set_trace()
-				mutation_number_file_variant.append([name,mutation_number_by_var_val])
+				mutation_number_file_variant[name] = mutation_number_by_var_val
 			self.analyse_results[file] = mutation_number_file_variant 
 			return self. analyse_results    
 
 class statistics(object):
 	"""docstring for statistics"""
-	def __init__(self, arg):
+	def __init__(self, count_table, mutation):
 		super(statistics, self).__init__()
 		self.arg = arg
-		self.contingency_table
+		self.contingency_table = {}
+		self.count_table = count_table
+		self.mutation = mutation
 
+	def create_contingency_table():
+		for sample in self.count_table:
+			contingency_table[sample]
 		
-	def create_contingency_table(count_table, mutation):
-		pass
 	def apply_fisher_test():
 		pass	
 	def check_positiv_sample():
