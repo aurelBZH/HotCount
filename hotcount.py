@@ -1,4 +1,5 @@
 #/usr/bin/python
+from __future__ import print_function
 from Bio import SeqIO
 import glob2
 from Bio.Seq import Seq
@@ -6,7 +7,9 @@ from Bio.Alphabet import generic_dna
 from Bio import SeqUtils
 import ipdb
 import pysam
+import scipy.stats as stats
 from python_Bio_Regexp import *
+
 
 class analysis(object):
 
@@ -62,10 +65,6 @@ class analysis(object):
 			# 	pass
 			# else : 
 				# raise TypeError(" the file type you have chosen isn't processed by the program")
-
-	# def statistics(self):
-	# 	print("why")
-	# 	print("test")
 	
 class analysisFQ(analysis):
 	"""docstring for analysisFQ"""
@@ -78,22 +77,25 @@ class analysisFQ(analysis):
 		
 	def get_file(self, path):
 		self.file_list = super(analysisFQ, self).get_file(path)
-		print self.file_list
+		print(self.file_list)
 		
 
 	def count_read(self, design_file):
 		design_dict={}
 		for design_values in design_file.items('mutation_design'):
 			design_dict[design_values[0]] = design_values[1] 	 
+
 		for file in self.file_list:
+			if file.endswith(".gz") :
+				pass
 			self.analyse_results[file] = {}
-			mutation_number_file_variant = []
+			mutation_number_file_variant = {}
 			with open(file, "rU") as handle:
 				records = list(SeqIO.parse(handle, "fastq"))
   
 				for name, design in design_dict.iteritems():
 					mutation_number_by_var_val = 0       
-					print design
+					print(design)
 					reverse_design = regex_seq_finder().regex_reverse_complement(design)
 					mut_number = 0
 					for record in records : 
@@ -102,7 +104,7 @@ class analysisFQ(analysis):
 						elif regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1]: 
 							mut_number = mut_number+1 
 					mutation_number_by_var_val= mutation_number_by_var_val + mut_number
-					mutation_number_file_variant.append([name,mutation_number_by_var_val])
+					mutation_number_file_variant[name] = mutation_number_by_var_val
 			self.analyse_results[file] = mutation_number_file_variant 
 		return self. analyse_results
 
@@ -139,29 +141,44 @@ class analysisBAM(analysis):
 				mutation_number_by_var_val= mutation_number_by_var_val + mut_number
 					#ipdb.set_trace()
 				mutation_number_file_variant[name] = mutation_number_by_var_val
-			self.analyse_results[file] = mutation_number_file_variant 
+			self.analyse_results[file] = mutation_number_by_var_val 
 			return self. analyse_results    
 
 class statistics(object):
 	"""docstring for statistics"""
-	def __init__(self, count_table, mutation):
+	def __init__(self, count_table, *mutation):
 		super(statistics, self).__init__()
-		self.arg = arg
 		self.contingency_table = {}
 		self.count_table = count_table
+		self.fisher_matrix_
 		self.mutation = mutation
 
 	def create_contingency_table():
 		for sample in self.count_table:
-			contingency_table[sample]
-		
+			for j in self.mutation:
+				self.contingency_table[sample] = [count_table[sample][j],count_table[sample]["all"]]
+		print("AAAAAAAAAAAAAAAAAAA")		
+		print(self.contingency_table)		
+		return self.contingency_table 
+			
 	def apply_fisher_test():
-		pass	
+		fisher_hash_result={}
+		for sample1, count_value1  in self.contingency_table:
+			fisher_hash_result["sample1"] = {}
+			for sample2, count_value2 in self.contingency_table:
+				if sample1 != sample2:
+					fisher_result = stats.fisher_exact([count_value1, count_value2],greater)
+					fisher_hash_result["sample1"]["sample2"] = fisher_result
+		print(fisher_result)
+		return fisher_result			
 	def check_positiv_sample():
 		pass	
 
-
-		
+	def global_stat():
+		self.create_contingency_table()
+		result =self.apply_fisher_test()
+		return result
 if __name__ == '__main__':
 	analysisFQ().get_file("resources/")
 	analysisFQ.count_read()
+	statistics()
