@@ -1,4 +1,6 @@
 #/usr/bin/python
+# coding: utf-8 
+from __future__ import print_function
 import re
 from Bio.Data import IUPACData
 import ipdb
@@ -136,7 +138,7 @@ class regex_seq_finder(object):
 					cpt_brace -= 1
 
 				if cpt_brace != 0 :
-					print i
+					print(i)
 					if i not in ["0","1","2","3","4","5","6","7","8","9",","]:
 						raise Exception("malformed regular expression")
 				if cpt_bracket != 0: 
@@ -213,11 +215,11 @@ if __name__ == '__main__':
 	# rev = regex_seq_finder().regex_reverse_complement(regex1, nuctype="DNA")
 	# print rev 
 	# print regex_seq_finder().find_subseq("ATCTTTTTATTTCGCGCGGGGAAA",regex1, True, False )
-	print regex_seq_finder().find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False)
+	print (regex_seq_finder().find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False))
 	assert_equal(regex_seq_finder().find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False), ["ATCT{1,12}", "test"])
 
 	# print regex_seq_finder().regex_reverse(val)
 # 	# print(regex_seq_finder(object).regex_complement(val))
-	print regex_seq_finder().verify_regex(r"ATC[CG]{1,11}")
+	print( regex_seq_finder().verify_regex(r"ATC[CG]{1,11}"))
 	# print regex_seq_finder().regex_reverse_complement("ATC{1,11}")
 	# print regex_seq_finder().regex_reverse_complement("AUCUCCCC", nuctype="RNA")

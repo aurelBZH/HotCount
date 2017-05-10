@@ -1,4 +1,5 @@
 #/usr/bin/python
+# coding: utf-8 
 from __future__ import print_function
 from Bio import SeqIO
 import glob2
@@ -150,34 +151,54 @@ class statistics(object):
 		super(statistics, self).__init__()
 		self.contingency_table = {}
 		self.count_table = count_table
-		self.fisher_matrix_
+		self.fisher_matrix =[]
 		self.mutation = mutation
 
-	def create_contingency_table():
+	def create_contingency_table(self):
 		for sample in self.count_table:
+			# ipdb.set_trace()
 			for j in self.mutation:
-				self.contingency_table[sample] = [count_table[sample][j],count_table[sample]["all"]]
-		print("AAAAAAAAAAAAAAAAAAA")		
+				try:
+					self.contingency_table[sample] = [self.count_table[sample][j],self.count_table[sample]["all"]]
+
+				except Exception as Valueerror:
+					raise e
 		print(self.contingency_table)		
 		return self.contingency_table 
 			
-	def apply_fisher_test():
+	def apply_fisher_test(self):
 		fisher_hash_result={}
-		for sample1, count_value1  in self.contingency_table:
+		# ipdb.set_trace()
+		for sample1, count_value1  in self.contingency_table.iteritems():
+			
 			fisher_hash_result["sample1"] = {}
-			for sample2, count_value2 in self.contingency_table:
+			for sample2, count_value2 in self.contingency_table.iteritems():
 				if sample1 != sample2:
-					fisher_result = stats.fisher_exact([count_value1, count_value2],greater)
-					fisher_hash_result["sample1"]["sample2"] = fisher_result
+					fisher_result = stats.fisher_exact([count_value1, count_value2],"greater")
+					fisher_hash_result[sample1][sample2] = fisher_result[1]
 		print(fisher_result)
-		return fisher_result			
-	def check_positiv_sample():
-		pass	
+		self.fisher_matrix = fisher_hash_result
+		return self.fisher_matrix	
 
-	def global_stat():
-		self.create_contingency_table()
-		result =self.apply_fisher_test()
-		return result
+	def check_positiv_sample(self):
+		positivity = False
+		pvalue_tab= []
+		print (self.fisher_matrix)
+		for sample_name, dict_result in self.fisher_matrix.iteritems() :
+			sample_pvalue_dict = {sample_name: []}
+			for sample2, pvalue in dict_result.iteritems():
+				sample_pvalue_dict[sample_name].append(pvalue)
+				pvalue_tab.append(sample_pvalue_dict)
+		nb_neg=0		
+		
+		for sample_res in pvalue_tab:
+			print (pvalue_tab)
+			for sample_name, pvalue in sample_res.iteritems():
+				if pvalue > 0.01:
+					nb_neg +=1
+			
+			return "{0}is positiv with only {1} ".format(sample_name,nb_neg)					
+
 if __name__ == '__main__':
 	analysisFQ().get_file("resources/")
 	analysisFQ.count_read()

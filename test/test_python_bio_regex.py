@@ -1,8 +1,10 @@
+#/usr/bin/python
+# coding: utf-8 
 import pytest
 from hotCount_remastered import python_Bio_Regexp
-from datadiff.tools import assert_equal 
-from datadiff import diff
-
+# from datadiff.tools import assert_equal 
+# from datadiff import diff
+from hotCount_remastered import hotcount 
 # @pytest.mark.xfail
 
 def test_simplecase(reg):
@@ -168,10 +170,14 @@ def test_find_subseq4t(reg):
 	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"AT(CT){1,12}", False, False, True),["AT(CT){1,12}", True]) == 0 	
 
 
+# fonction utilisé pour comparer 2 tableau sans redondance 
+#utilisable dans la mesure ou les test ont connu 
+#
 def diff(list1, list2):
-    c = set(list1).union(set(list2))
-    d = set(list1).intersection(set(list2))
-    return len(list(c - d))
+	"""	docstring pour diff  """
+	c = set(list1).union(set(list2))
+	d = set(list1).intersection(set(list2))
+	return len(list(c - d))
 
 
 

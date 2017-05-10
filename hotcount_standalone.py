@@ -1,4 +1,5 @@
 #/usr/bin/python
+#coding: utf-8
 from __future__ import print_function
 import argparse
 import ConfigParser
@@ -31,14 +32,14 @@ class stand_alone(object):
 			if self.analysis_type == "ALL":
 				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
 				op_file.write(str(self.analyse_result))
-				self.stat_result = statistics(self.analyse_result)
+				self.stat_result = global_stat(analyse_result, "wt", "delg")
 				op_file.write(str(self.stat_result))
 
 			elif self.analysis_type == "analysis":
 				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
 				op_file.write(str(self.analyse_result))
 			elif self.analysis_type == "stat":
-				self.stat_result = statistics()
+				self.stat_result =global_stat(self.analyse_result, "wt", "delg")
 				op_file.write(str(self.stat_result))
 			else:
 				raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")	
@@ -47,10 +48,10 @@ class stand_alone(object):
 		else:
 
 			if self.analysis_type == "ALL":
-				print ("ahahahah")
 				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
 				print(self.analyse_result)
-				self.stat_result = statistics(self.analyse_result, ["wt", "delg"]).global_stat()
+
+				self.stat_result = global_stat(self.analyse_result, "wt", "delg")
 				print ("IIIIIIIIIi")
 				print(self.stat_result)
 
@@ -58,7 +59,7 @@ class stand_alone(object):
 				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
 				print(self.analyse_result)
 			elif self.analysis_type == "stat":
-				self.stat_result = statistics()
+				self.stat_result = global_stat(self.analyse_result, "wt", "delg")
 				print(self.stat_result)
 			else:
 				raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")	
@@ -79,7 +80,12 @@ def analysis(tmp_filetype, tmp_path, tmp_design_file):
 		analyse_result = BAManalyse.count_read(tmp_design_file)
 	return analyse_result	
 
-		
+
+def global_stat(analyse_result,*kwarg):
+	statistic = statistics(analyse_result,*kwarg)
+	statistic.create_contingency_table()
+	result = statistic.apply_fisher_test()
+	return result		
 
 
 
@@ -95,7 +101,5 @@ if __name__ == '__main__':
 	parser.add_argument("-o","--output", help="result file")
 	args = parser.parse_args()
 	config.read(args.designfile)
-	print(config)
 	hotcount_stda = stand_alone(config, args.path, args.analysistype, args.filetype, args.output)
 	hotcount_stda.choose_analysis()
-	print(hotcount_stda.analyse_result)
