@@ -10,6 +10,9 @@ import ipdb
 import pysam
 import scipy.stats as stats
 from python_Bio_Regexp import *
+import logging
+import graypy
+
 
 
 class analysis(object):
@@ -22,10 +25,9 @@ class analysis(object):
 		self.file_list=[]
 
 	def get_file(self, path):
-		print self.file_extentions
+		print(self.file_extentions)
 		for extention in self.file_extentions : 
 			file_list = glob2.glob(path+extention)
-			# print file_list
 			if len(file_list) != 0 :
 					break
 		if len(file_list) == 0 :	 
@@ -37,35 +39,7 @@ class analysis(object):
         
 	def count_read( design_file ): 
 		raise NotImplementedError
-		# design_dict={}
-		# for design_values in design_file.items('mutation_design'):
-		# 	design_dict[design_values[0]] = Seq(design_values[1]) 
-           
-		# for file in self.file_list:
-		# 	self.analyse_results[file] = {}
-		# 	mutation_number_file_variant = []
-		# 	with open(file, "rU") as handle:
-		# 		records = list(SeqIO.parse(handle, filetype.lower()))
-  
-		# 		for name, design in design_dict.iteritems():
-		# 			mutation_number_by_var_val = 0       
-		# 			print design
-		# 			mut_number = 0
-		# 			for record in records : 
-		# 				if len(SeqUtils.nt_search(str(record.seq),str(design)))>1:
-		# 					mut_number = mut_number+1
-		# 				elif len(SeqUtils.nt_search(str(record.seq),str(design.reverse_complement())))>1: 
-		# 					mut_number = mut_number+1 
-		# 			mutation_number_by_var_val= mutation_number_by_var_val + mut_number
-		# 			#ipdb.set_trace()
-		# 			mutation_number_file_variant.append([name,mutation_number_by_var_val])
-		# 	self.analyse_results[file] = mutation_number_file_variant                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
-	
-					
-			# elif filetype == "BAM":
-			# 	pass
-			# else : 
-				# raise TypeError(" the file type you have chosen isn't processed by the program")
+		
 	
 class analysisFQ(analysis):
 	"""docstring for analysisFQ"""
@@ -147,12 +121,13 @@ class analysisBAM(analysis):
 
 class statistics(object):
 	"""docstring for statistics"""
-	def __init__(self, count_table, *mutation):
+	def __init__(self, count_table, pvalue, *mutation):
 		super(statistics, self).__init__()
 		self.contingency_table = {}
 		self.count_table = count_table
 		self.fisher_matrix =[]
 		self.mutation = mutation
+		self.pvalue =pvalue
 
 	def create_contingency_table(self):
 		for sample in self.count_table:
@@ -163,7 +138,7 @@ class statistics(object):
 
 				except Exception as Valueerror:
 					raise e
-		print(self.contingency_table)		
+		# print(self.contingency_table)		
 		return self.contingency_table 
 			
 	def apply_fisher_test(self):
@@ -189,15 +164,18 @@ class statistics(object):
 			for sample2, pvalue in dict_result.iteritems():
 				sample_pvalue_dict[sample_name].append(pvalue)
 				pvalue_tab.append(sample_pvalue_dict)
-		nb_neg=0		
-		
+				
+		positive_sample_dict={}
 		for sample_res in pvalue_tab:
+			nb_neg=0
 			print (pvalue_tab)
 			for sample_name, pvalue in sample_res.iteritems():
-				if pvalue > 0.01:
+				if pvalue > self.pvalue:
 					nb_neg +=1
-			
-			return "{0}is positiv with only {1} ".format(sample_name,nb_neg)					
+			if nb_neg_val <= 6:
+				yield sample_name, nb_neg_val
+
+
 
 if __name__ == '__main__':
 	analysisFQ().get_file("resources/")

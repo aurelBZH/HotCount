@@ -11,13 +11,14 @@ version = 1.0
 
 class stand_alone(object):
 	"""docstring for HotCount"""
-	def __init__(self, design_file, path, analysis_type, filetype, output_file="default"):
+	def __init__(self, design_file, path, analysis_type, filetype, pvalue, output_file="default"):
 		self.file_path = path
 		self.design_file = design_file
 		self.analysis_type = analysis_type
 		self.filetype = filetype
 		self.analyse_result = ""
 		self.stat_result = ""
+		self.pvalue = pvalue
 		if output_file !="default" :
 			self.output_file =output_file
 
@@ -32,14 +33,14 @@ class stand_alone(object):
 			if self.analysis_type == "ALL":
 				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
 				op_file.write(str(self.analyse_result))
-				self.stat_result = global_stat(analyse_result, "wt", "delg")
+				self.stat_result = global_stat(analyse_result, self.pvalue, "wt", "delg")
 				op_file.write(str(self.stat_result))
 
 			elif self.analysis_type == "analysis":
 				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
 				op_file.write(str(self.analyse_result))
 			elif self.analysis_type == "stat":
-				self.stat_result =global_stat(self.analyse_result, "wt", "delg")
+				self.stat_result =global_stat(self.analyse_result, self.pvalue, "wt", "delg")
 				op_file.write(str(self.stat_result))
 			else:
 				raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")	
@@ -51,7 +52,7 @@ class stand_alone(object):
 				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
 				print(self.analyse_result)
 
-				self.stat_result = global_stat(self.analyse_result, "wt", "delg")
+				self.stat_result = global_stat(self.analyse_result, self.pvalue, "wt", "delg")
 				print ("IIIIIIIIIi")
 				print(self.stat_result)
 
@@ -59,7 +60,7 @@ class stand_alone(object):
 				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
 				print(self.analyse_result)
 			elif self.analysis_type == "stat":
-				self.stat_result = global_stat(self.analyse_result, "wt", "delg")
+				self.stat_result = global_stat(self.analyse_result, self.pvalue, "wt", "delg")
 				print(self.stat_result)
 			else:
 				raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")	
@@ -81,8 +82,8 @@ def analysis(tmp_filetype, tmp_path, tmp_design_file):
 	return analyse_result	
 
 
-def global_stat(analyse_result,*kwarg):
-	statistic = statistics(analyse_result,*kwarg)
+def global_stat(analyse_result, pvalue,*kwarg):
+	statistic = statistics(analyse_result, pvalue, *kwarg)
 	statistic.create_contingency_table()
 	result = statistic.apply_fisher_test()
 	return result		
@@ -99,7 +100,8 @@ if __name__ == '__main__':
 	parser.add_argument('-t','--analysistype', default='ALL', help='type of analysis to be processed')
 	parser.add_argument('-f','--filetype', default='FASTQ', help='file type to process')
 	parser.add_argument("-o","--output", help="result file")
+	parser.add_argument("-p","--pvalue", default=0.01, help="pvalue", type=int)
 	args = parser.parse_args()
 	config.read(args.designfile)
-	hotcount_stda = stand_alone(config, args.path, args.analysistype, args.filetype, args.output)
+	hotcount_stda = stand_alone(config, args.path, args.analysistype, args.filetype, args.pvalue, args.output)
 	hotcount_stda.choose_analysis()
