@@ -104,7 +104,6 @@ class analysisBAM(analysis):
 			samfile = pysam.AlignmentFile(file)
 			self.analyse_results[file] = {}
 			mutation_number_file_variant = {}
-
 			for name, design in design_dict.iteritems():
 				mutation_number_by_var_val = 0       
 				mut_number = 0
@@ -136,8 +135,8 @@ class statistics(object):
 				try:
 					self.contingency_table[sample] = [self.count_table[sample][j],self.count_table[sample]["all"]]
 
-				except Exception as Valueerror:
-					raise e
+				except ValueError:
+					print("putin")
 		# print(self.contingency_table)		
 		return self.contingency_table 
 			
@@ -146,12 +145,16 @@ class statistics(object):
 		# ipdb.set_trace()
 		for sample1, count_value1  in self.contingency_table.iteritems():
 			
-			fisher_hash_result["sample1"] = {}
 			for sample2, count_value2 in self.contingency_table.iteritems():
 				if sample1 != sample2:
+					fisher_hash_result[sample1] = {}
+
 					fisher_result = stats.fisher_exact([count_value1, count_value2],"greater")
+					print(sample1)
+					print (fisher_hash_result)
+					print(sample2)
 					fisher_hash_result[sample1][sample2] = fisher_result[1]
-		print(fisher_result)
+		# print(fisher_result)
 		self.fisher_matrix = fisher_hash_result
 		return self.fisher_matrix	
 
