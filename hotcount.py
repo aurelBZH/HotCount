@@ -133,11 +133,13 @@ class statistics(object):
 			# ipdb.set_trace()
 			for j in self.mutation:
 				try:
+					if self.count_table[sample][j] > self.count_table[sample]["all"] :
+						raise ValueError("Nombre de read porteur de l'expression régulière \"controle\" infèrieur" +
+							"au nombre de read muté. Rechercher une erreur dans l'expression régulière.")
 					self.contingency_table[sample] = [self.count_table[sample][j],self.count_table[sample]["all"]]
 
 				except ValueError:
-					print("putin")
-		# print(self.contingency_table)		
+					# print(self.contingency_table)		
 		return self.contingency_table 
 			
 	def apply_fisher_test(self):

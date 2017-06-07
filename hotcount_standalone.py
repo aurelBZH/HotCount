@@ -15,62 +15,109 @@ version = 1.0
 
 class stand_alone(object):
 	"""docstring for HotCount"""
-	def __init__(self, design_file, path, analysis_type, filetype, pvalue, mutation,  output_file="default"):
-		self.file_path = path
-		self.design_file = design_file
-		self.analysis_type = analysis_type
-		self.filetype = filetype
+	def __init__(self):
+		# self.file_path = path
+		# self.design_file = design_file
+		# self.analysis_type = analysis_type
+		# self.filetype = filetype
 		self.analyse_result = ""
 		self.stat_result = ""
-		self.pvalue = pvalue
-		self.mutation= mutation.split(",")
-		if output_file !="default" :
-			self.output_file =output_file
+		# self.pvalue = pvalue
+		# self.mutation= mutation.split(",")
+		# if output_file !="default" :
+		# 	self.output_file =output_file
 
-	def choose_analysis(self):
-		if self.output_file:
+	# def choose_analysis(self):
+	# 	if self.output_file:
+	# 		try:
+	# 			op_file = open(self.output_file, "w")
+	# 		except Exception as e:
+	# 			raise Exception("there is a problem with the file opening")
+			
+			
+	# 		if self.analysis_type == "ALL":
+	# 			self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
+	# 			op_file.write(str(self.analyse_result))
+	# 			self.stat_result = global_stat(analyse_result, self.pvalue,self.mutation)
+	# 			op_file.write(str(self.stat_result))
+
+	# 		elif self.analysis_type == "count":
+	# 			self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
+	# 			op_file.write(str(self.analyse_result))
+	# 		elif self.analysis_type == "stat":
+	# 			self.stat_result =global_stat(self.analyse_result, self.pvalue, self.mutation)
+	# 			op_file.write(str(self.stat_result))
+	# 		else:
+	# 			raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")	
+
+	# 		op_file.close()	
+	# 	else:
+
+	# 		if self.analysis_type == "ALL":
+	# 			self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
+	# 			print(self.analyse_result)
+
+	# 			self.stat_result = global_stat(self.analyse_result, self.pvalue, self.mutation)
+	# 			print(self.stat_result)
+
+	# 		elif self.analysis_type == "count":
+	# 			self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
+	# 			print(self.analyse_result)
+	# 		elif self.analysis_type == "stat":
+	# 			self.stat_result = global_stat(self.analyse_result, self.pvalue, self.mutation)
+	# 			print(self.stat_result)
+	# 		else:
+				# raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")	
+		
+	def count(self, design_file, path, filetype, output_file="default"):
+		print (output_file)
+		if output_file!=None:
+			print("output_file")
+			try:
+				op_file = open(output_file, "w")
+			except Exception as e:
+				raise Exception("there is a problem with the file opening")	
+
+			self.analyse_result = analysis(filetype, path, design_file)
+			op_file.write(str(self.analyse_result))				
+			op_file.close()	
+		else:
+			self.analyse_result = analysis(filetype, path, design_file)
+			print(self.analyse_result)
+
+
+	def ALL(self,design_file, path, filetype, pvalue, mutation, sample, output_file="default", controle):
+		if output_file!=None:
+			try:
+				op_file = open(output_file, "w")
+			except Exception as e:
+				raise Exception("there is a problem with the file opening")
+			self.analyse_result = analysis(filetype, file_path, design_file)
+			op_file.write(str(self.analyse_result))
+			self.stat_result = global_stat(self.analyse_result, pvalue,mutation, sample)
+			op_file.write(str(to_csv(self.stat_result)))
+			op_file.close()	
+		else:
+			self.analyse_result = analysis(filetype, file_path, design_file)
+			print(self.analyse_result)
+
+			self.stat_result = global_stat(self.analyse_result, pvalue, mutation)
+			print(self.stat_result)
+
+
+	def stat(self, countfile, pvalue, sample, mutation, output_file="default"):
+		analyse_result = to_dict(countfile)
+		if output_file!=None:
 			try:
 				op_file = open(self.output_file, "w")
 			except Exception as e:
 				raise Exception("there is a problem with the file opening")
-			
-			
-			if self.analysis_type == "ALL":
-				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
-				op_file.write(str(self.analyse_result))
-				self.stat_result = global_stat(analyse_result, self.pvalue,self.mutation)
-				op_file.write(str(self.stat_result))
-
-			elif self.analysis_type == "analysis":
-				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
-				op_file.write(str(self.analyse_result))
-			elif self.analysis_type == "stat":
-				self.stat_result =global_stat(self.analyse_result, self.pvalue, self.mutation)
-				op_file.write(str(self.stat_result))
-			else:
-				raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")	
-
+			self.stat_result =global_stat(analyse_result, pvalue, mutation)
+			op_file.write(str(to_csv(self.stat_result)))
 			op_file.close()	
 		else:
-
-			if self.analysis_type == "ALL":
-				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
-				print(self.analyse_result)
-
-				self.stat_result = global_stat(self.analyse_result, self.pvalue, self.mutation)
-				print(self.stat_result)
-
-			elif self.analysis_type == "analysis":
-				self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
-				print(self.analyse_result)
-			elif self.analysis_type == "stat":
-				self.stat_result = global_stat(self.analyse_result, self.pvalue, self.mutation)
-				print(self.stat_result)
-			else:
-				raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")	
-		
-
-
+			self.stat_result = global_stat(analyse_result, pvalue, mutation)
+			print(to_csv(self.stat_result))
 
 def analysis(tmp_filetype, tmp_path, tmp_design_file):
 
@@ -93,44 +140,82 @@ def global_stat(analyse_result, pvalue,mutation):
 	results = statistic.check_positiv_sample()
 	return results		
 
-def to_csv(dict):
+def to_csv(dicti, output_file ="default"):
 	cpt=0
-	with open('mycsvfile.csv', 'wb') as f:
-        for i,j in count.iteritems(): 
-            j["sample"]=i
-            w = csv.DictWriter(f,j)
-            if cpt == 0 :
-    	        w.writeheader()
-            w.writerow(j)
-            cpt+=1
+	if output_file == "default":
+		output_file = "result.txt"
+	with open(output_file, 'wb') as f:
+		for i,j in dicti.iteritems(): 
+			j["sample"]=i
+			w = csv.DictWriter(f,j)
+			if cpt == 0 :
+			    w.writeheader()
+			w.writerow(j)
+			cpt+=1
 
-def to_dict():
-	with open('mycsvfile.csv', 'rb') as f:
-    ...:   val = csv.DictReader(f)
-    ...:   for row in val:
-    ...:         print row
-    return val
+def to_dict(file):
+	with open(file, 'rb') as f:
+		val = csv.DictReader(f)
+		for row in val:
+			print (row)
+    	return val
 
 
 if __name__ == '__main__':
-	
-	parser = argparse.ArgumentParser()
+
 	config = ConfigParser.SafeConfigParser()
+	parser = argparse.ArgumentParser()
 
-	parser.add_argument('--designfile',required=True,help='path to the design file, the design file is the file containing the variant')
-	parser.add_argument('path', help='where the sample file are stored')
-	parser.add_argument('-t','--analysistype', default='ALL', help='type of analysis to be processed')
-	parser.add_argument('-f','--filetype', default='FASTQ', help='file type to process')
-	parser.add_argument("-o","--output", help="result file")
-	parser.add_argument("-p","--pvalue", default=0.001, help="pvalue", type=int)
-	parser.add_argument("-s", "--sample", default=6, help="max number of positive samples")
-	parser.add_argument("-m", "--mutation", required= True,  help=" mutation to be analysed, separated by a ',' " )	
+	sub = parser.add_subparsers(help="type of analysis",dest="analysis_type")
+	all_parser = sub.add_parser("ALL")
+	all_parser.add_argument('--designfile',required=True,help='path to the design file, the design file is the file containing the variant')
+	all_parser.add_argument('--path',required=True, help='where the sample file are stored')
+	all_parser.add_argument('-f','--filetype', default='FASTQ', help='file type to process')
+	all_parser.add_argument("-o","--output", help="result file")
+	all_parser.add_argument("-p","--pvalue", default=0.001, help="pvalue", type=int)
+	all_parser.add_argument("-s", "--sample", default=6, help="max number of positive samples")
+	all_parser.add_argument("-m", "--mutation", required= True,  help=" mutation to be analysed, separated by a ',' " )	
+	all_parser.add_argument("-a","--controle",default="all", help="controle regex")
 
-	args = parser.parse_args()
-	config.read(args.designfile)
-	if args.mutation:
-		mutation =args.mutation
+	count_parser = sub.add_parser("count")
+	count_parser.add_argument('--designfile',required=True,help='path to the design file, the design file is the file containing the variant')
+	count_parser.add_argument('--path',required=True, help='where the sample file are stored')
+	count_parser.add_argument('-f','--filetype', default='FASTQ', help='file type to process')
+	count_parser.add_argument("-o","--output", help="result file")
+	
+	stat_parser = sub.add_parser("stat")
+	stat_parser.add_argument("-c","--countfile", required=True, help="file with count result")
+	stat_parser.add_argument("-p","--pvalue", default=0.001, help="pvalue", type=int)
+	stat_parser.add_argument("-s", "--sample", default=6, help="max number of positive samples")
+	stat_parser.add_argument("-m", "--mutation", required= True,  help=" mutation to be analysed, separated by a ',' " )
+	stat_parser.add_argument("-o","--output", help="result file")
+	stat_parser.add_argument("-a","--controle", default="all", help="controle regex")
+
+
+	
+
+	args = vars(parser.parse_args())
+
+	if "designfile" in args:
+		pass
+		config.read(args["designfile"])
+		print (args["designfile"])
+
+	
+
+	if "mutation" in args:
+		mutation =args["mutation"]
 	else:
 		mutation ="default"
-	hotcount_stda = stand_alone(config, args.path, args.analysistype, args.filetype, args.pvalue, mutation, args.output)
-	hotcount_stda.choose_analysis()
+	print(args)
+
+	ipdb.set_trace()
+
+	hotcount_stda = stand_alone()
+
+	if args["analysis_type"]=="ALL":
+		hotcount_stda.ALL(config,args["path"],args["filetype"], args["pvalue"], mutation, args["sample"], args["output"], args["controle"])
+	elif args["analysis_type"]=="count":
+		hotcount_stda.count(config, args["path"], args["filetype"], args["output"])
+	else :	
+		hotcount_stda.stat(args["countfile"], args["pvalue"], args["sample"], args["mutation"], args["output"], args["controle"])
