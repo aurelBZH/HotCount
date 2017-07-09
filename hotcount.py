@@ -155,67 +155,90 @@ class analysisBAM(analysis):
 			return self. analyse_results    
 
 class statistics(object):
-	"""docstring for statistics"""
-	def __init__(self, count_table, pvalue, *mutation):
-		super(statistics, self).__init__()
+	"""docstring for statistics
+	a class for statistics analysis
+
+	"""
+	def __init__(self, count_table, pvalue, sample, controle, *mutation):
+		"""
+		:param count_table: dictionary of count result
+		:param pvalue: the pvalue to use for stat analysis
+		:param samle: the number of positiv sample 
+		:param controle: regex to use as controle during the stat analysis
+		:param mutation: mutation to analyse
+		:type count_table: dictionary
+		:type pvalue: float
+		:type sample: int
+		:type controle: string
+		:type mutation: string
+		"""
 		self.contingency_table = {}
 		self.count_table = count_table
 		self.fisher_matrix =[]
 		self.mutation = mutation
 		self.pvalue =pvalue
+		self.sample = sample
+		self.controle = controle
+		logger.info("begin stat")
+
 
 	def create_contingency_table(self):
+		"""
+		a methode to create a contingency table
+
+		"""
 		for sample in self.count_table:
 			# ipdb.set_trace()
+			logger.info(self.mutation)
 			for j in self.mutation:
 				try:
-					if self.count_table[sample][j] > self.count_table[sample]["all"] :
+					if self.count_table[sample][j] > self.count_table[sample][self.controle] :
 						raise ValueError("Nombre de read porteur de l'expression régulière \"controle\" infèrieur" +
 							"au nombre de read muté. Rechercher une erreur dans l'expression régulière.")
-					self.contingency_table[sample] = [self.count_table[sample][j],self.count_table[sample]["all"]]
+					self.contingency_table[sample] = [self.count_table[sample][j],self.count_table[sample][self.controle]]
 
 				except ValueError:
+					raise ValueError("problem in value error ")
 					# print(self.contingency_table)		
 		return self.contingency_table 
 			
 	def apply_fisher_test(self):
+		"""
+		a method to apply fisher test on 
+		"""
 		fisher_hash_result={}
 		# ipdb.set_trace()
 		for sample1, count_value1  in self.contingency_table.iteritems():
-			
+			fisher_hash_result[sample1] = {}
 			for sample2, count_value2 in self.contingency_table.iteritems():
 				if sample1 != sample2:
-					fisher_hash_result[sample1] = {}
 
 					fisher_result = stats.fisher_exact([count_value1, count_value2],"greater")
-					print(sample1)
-					print (fisher_hash_result)
-					print(sample2)
 					fisher_hash_result[sample1][sample2] = fisher_result[1]
-		# print(fisher_result)
 		self.fisher_matrix = fisher_hash_result
 		return self.fisher_matrix	
 
 	def check_positiv_sample(self):
+		"""
+		a method to check sample positivity
+		"""
 		positivity = False
 		pvalue_tab= []
-		print (self.fisher_matrix)
+		sample_pvalue_dict = {}
 		for sample_name, dict_result in self.fisher_matrix.iteritems() :
 			sample_pvalue_dict = {sample_name: []}
 			for sample2, pvalue in dict_result.iteritems():
 				sample_pvalue_dict[sample_name].append(pvalue)
-				pvalue_tab.append(sample_pvalue_dict)
-				
-		positive_sample_dict={}
+			pvalue_tab.append(sample_pvalue_dict)
+		significativ_value_dict = {}
 		for sample_res in pvalue_tab:
 			nb_neg=0
-			print (pvalue_tab)
-			for sample_name, pvalue in sample_res.iteritems():
-				if pvalue > self.pvalue:
-					nb_neg +=1
-			if nb_neg_val <= 6:
-				yield sample_name, nb_neg_val
-
+			for sample_name, pvalues in sample_res.iteritems():
+				for value in pvalues:
+					if value > self.pvalue:
+						nb_neg +=1
+				significativ_value_dict[sample_name] = nb_neg		
+		return significativ_value_dict
 
 
 if __name__ == '__main__':

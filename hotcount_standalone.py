@@ -259,38 +259,30 @@ if __name__ == '__main__':
 	count_parser.add_argument("-o","--output", help="result file")
 	
 	stat_parser = sub.add_parser("stat")
-	stat_parser.add_argument("-c","--countfile", required=True, help="file with count result")
+	stat_parser.add_argument("-c","--countfile", required=True, help="file with count result in csv")
 	stat_parser.add_argument("-p","--pvalue", default=0.001, help="pvalue", type=int)
 	stat_parser.add_argument("-s", "--sample", default=6, help="max number of positive samples")
 	stat_parser.add_argument("-m", "--mutation", required= True,  help=" mutation to be analysed, separated by a ',' " )
 	stat_parser.add_argument("-o","--output", help="result file")
 	stat_parser.add_argument("-a","--controle", default="all", help="controle regex")
 
-
-	
-
 	args = vars(parser.parse_args())
 
 	if "designfile" in args:
-		pass
 		config.read(args["designfile"])
-		print (args["designfile"])
-
-	
+		show_mutation(config)
 
 	if "mutation" in args:
 		mutation =args["mutation"]
 	else:
 		mutation ="default"
-	print(args)
-
-	ipdb.set_trace()
 
 	hotcount_stda = stand_alone()
-
+	analysis_type = args["analysis_type"]
+	logger.info("analysis begin in %s mode" %analysis_type)
 	if args["analysis_type"]=="ALL":
-		hotcount_stda.ALL(config,args["path"],args["filetype"], args["pvalue"], mutation, args["sample"], args["output"], args["controle"])
+		hotcount_stda.ALL(config,args["path"],args["filetype"], args["pvalue"], mutation, args["sample"], args["controle"], args["output"])
 	elif args["analysis_type"]=="count":
 		hotcount_stda.count(config, args["path"], args["filetype"], args["output"])
 	else :	
-		hotcount_stda.stat(args["countfile"], args["pvalue"], args["sample"], args["mutation"], args["output"], args["controle"])
+		hotcount_stda.stat(args["countfile"], args["pvalue"], args["sample"], args["mutation"], args["controle"], args["output"])
