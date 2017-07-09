@@ -6,126 +6,145 @@ import ConfigParser
 import scipy
 from hotcount import *
 import scipy.stats as stats
-import logging
-import graypy
-from logging.handlers import RotatingFileHandler
+from logsystem import *
+import csv 
 
 version = 1.0
-
 
 class stand_alone(object):
 	"""docstring for HotCount"""
 	def __init__(self):
-		# self.file_path = path
-		# self.design_file = design_file
-		# self.analysis_type = analysis_type
-		# self.filetype = filetype
+
 		self.analyse_result = ""
 		self.stat_result = ""
-		# self.pvalue = pvalue
-		# self.mutation= mutation.split(",")
-		# if output_file !="default" :
-		# 	self.output_file =output_file
 
-	# def choose_analysis(self):
-	# 	if self.output_file:
-	# 		try:
-	# 			op_file = open(self.output_file, "w")
-	# 		except Exception as e:
-	# 			raise Exception("there is a problem with the file opening")
-			
-			
-	# 		if self.analysis_type == "ALL":
-	# 			self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
-	# 			op_file.write(str(self.analyse_result))
-	# 			self.stat_result = global_stat(analyse_result, self.pvalue,self.mutation)
-	# 			op_file.write(str(self.stat_result))
-
-	# 		elif self.analysis_type == "count":
-	# 			self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
-	# 			op_file.write(str(self.analyse_result))
-	# 		elif self.analysis_type == "stat":
-	# 			self.stat_result =global_stat(self.analyse_result, self.pvalue, self.mutation)
-	# 			op_file.write(str(self.stat_result))
-	# 		else:
-	# 			raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")	
-
-	# 		op_file.close()	
-	# 	else:
-
-	# 		if self.analysis_type == "ALL":
-	# 			self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
-	# 			print(self.analyse_result)
-
-	# 			self.stat_result = global_stat(self.analyse_result, self.pvalue, self.mutation)
-	# 			print(self.stat_result)
-
-	# 		elif self.analysis_type == "count":
-	# 			self.analyse_result = analysis(self.filetype, self.file_path, self.design_file)
-	# 			print(self.analyse_result)
-	# 		elif self.analysis_type == "stat":
-	# 			self.stat_result = global_stat(self.analyse_result, self.pvalue, self.mutation)
-	# 			print(self.stat_result)
-	# 		else:
-				# raise ValueError("you have entered a false param. Param can only be either ALL, analysis or stat")	
+	
 		
 	def count(self, design_file, path, filetype, output_file="default"):
-		print (output_file)
-		if output_file!=None:
-			print("output_file")
-			try:
-				op_file = open(output_file, "w")
-			except Exception as e:
-				raise Exception("there is a problem with the file opening")	
+		"""
+		a function making the count treatment only
+		:param design_file: file containing the design of the  diferent regex to count
+		:param path: path to the directory where the file are stored
+		:param filetype :file type
+		:param output_file : number of positiv sample chosen by the user 
+		:type design_file: dictionary
+		:type path : string
+		:type filetype: string
 
+		:type output_file: string
+
+		"""
+		if output_file!=None:
 			self.analyse_result = analysis(filetype, path, design_file)
-			op_file.write(str(self.analyse_result))				
-			op_file.close()	
+			csv_analysis = to_csv(self.analyse_result, output_file)
 		else:
 			self.analyse_result = analysis(filetype, path, design_file)
 			print(self.analyse_result)
 
 
-	def ALL(self,design_file, path, filetype, pvalue, mutation, sample, output_file="default", controle):
+	def ALL(self,design_file, path, filetype, pvalue, mutation, sample, controle, output_file="default"):
+		"""
+		a function to make count and statistic treatment
+		:param design_file: file containing the design of the  diferent regex to count
+		:param path: path to the directory where the file are stored
+		:param filetype : number of positiv sample chosen by the user 
+		:param pvalue: pvalue to choose for analysis
+		:param mutation: list of mutation to study
+		:param sample : number of positiv sample chosen by the user 
+		:param controle: controle value for statistics
+		:param output_file : number of positiv sample chosen by the user 
+		:type design_file: dictionary
+		:type path : string
+		:type filetype : string
+		:type pvalue: float
+		:type mutation : string
+		:type sample : float
+		:type controle : string	
+		:type output_file: string
+		"""
 		if output_file!=None:
 			try:
 				op_file = open(output_file, "w")
 			except Exception as e:
 				raise Exception("there is a problem with the file opening")
-			self.analyse_result = analysis(filetype, file_path, design_file)
-			op_file.write(str(self.analyse_result))
-			self.stat_result = global_stat(self.analyse_result, pvalue,mutation, sample)
-			op_file.write(str(to_csv(self.stat_result)))
+			self.analyse_result = analysis(filetype, path, design_file)
+			op_file.write(to_csv(self.analyse_result, output_file))
+			self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, mutation.split(","))
+			for k in xrange(0,int(sample)):
+				for i,j in self.stat_result.iteritems():
+					if j==k:
+						logger.debug(str(i)+','+str(j))
+						op_file.write(str(i)+','+str(j))
 			op_file.close()	
 		else:
-			self.analyse_result = analysis(filetype, file_path, design_file)
+			self.analyse_result = analysis(filetype, path, design_file)
 			print(self.analyse_result)
 
-			self.stat_result = global_stat(self.analyse_result, pvalue, mutation)
-			print(self.stat_result)
+			self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, mutation.split(","))
+			for k in xrange(0,int(sample)):
+				for i,j in self.stat_result.iteritems():
+					if j==k:
+						print (i,j)
 
-
-	def stat(self, countfile, pvalue, sample, mutation, output_file="default"):
-		analyse_result = to_dict(countfile)
+	def stat(self, countfile, pvalue, sample, mutation, controle, output_file="default"):
+		"""
+		a function to make count and statistic treatment
+		:param countfile: file containing the result of the  diferent count
+		:param pvalue: pvalue to choose for analysis
+		:param sample : number of positiv sample chosen by the user 
+		:param mutation: list of mutation to study
+		:param controle: controle value for statistics
+		:param output_file : number of positiv sample chosen by the user 
+		:type countfile: dictionary
+		:type pvalue: float
+		:type sample : float
+		:type mutation : string
+		:type controle : string	
+		:type output_file: string
+		"""
+		file_ext =[".*\.txt",".*\.csv"]
+		for i in file_ext:
+			if re.match(i, countfile):
+				countvalue = to_dict(countfile)
 		if output_file!=None:
 			try:
 				op_file = open(self.output_file, "w")
 			except Exception as e:
 				raise Exception("there is a problem with the file opening")
-			self.stat_result =global_stat(analyse_result, pvalue, mutation)
-			op_file.write(str(to_csv(self.stat_result)))
+			self.stat_result =global_stat(countvalue, pvalue, sample, controle, mutation.split(","))
+			for k in xrange(0,int(sample)):
+				for i,j in self.stat_result.iteritems():
+					if j==k:
+						logger.info(i,j)
+						op_file.write(str(i)+','+str(j))
 			op_file.close()	
 		else:
-			self.stat_result = global_stat(analyse_result, pvalue, mutation)
-			print(to_csv(self.stat_result))
+			self.stat_result = global_stat(countvalue, pvalue, sample, controle, mutation.split(","))
+			for k in xrange(0,int(sample)):
+				for i,j in self.stat_result.iteritems():
+					if j==k:
+						print (i,j)
+			
+
 
 def analysis(tmp_filetype, tmp_path, tmp_design_file):
+	"""
+	a function regrouping the count analysis 
+	:param tmp_filetype: input file type
+	:param tmp_path: path of input files
+	:param tmp_design_file: design_file containing design
+	:type tmp_filetype: string
+	:type tmp_path: string
+	:type tmp_design_file: string
+	:return analyse_result: result of the count analysis 
+	:rtype analyse_result: dictionary
+	
+	"""
 
 	if tmp_filetype == "FASTQ":
 		FQanalyse = analysisFQ()
 		FQanalyse.get_file(tmp_path)
 		analyse_result = FQanalyse.count_read(tmp_design_file)
-		print(analyse_result)
 	elif tmp_filetype == "BAM":
 		BAManalyse = analysisBAM()
 		BAManalyse.get_file(self.file_path)
@@ -133,33 +152,89 @@ def analysis(tmp_filetype, tmp_path, tmp_design_file):
 	return analyse_result	
 
 
-def global_stat(analyse_result, pvalue,mutation):
-	statistic = statistics(analyse_result, pvalue, *mutation)
+def global_stat(analyse_result, pvalue, sample, controle, mutation):
+	"""
+	a function to regroupe statistic treatment
+	:param analyse_result: result of the mutation count
+	:param pvalue: pvalue chosebn by the user by default 0.01
+	:param sample : number of positiv sample chosen by the user 
+	:param controle: name of the controle string
+	:param mutation: name of the mutation 
+	:type analyse_result: dictionary
+	:type pvalue: float
+	:type sample : string
+	:type controle: string
+	:type mutation: string
+	:return results: results of the statistic analysis
+	:rtype results: dictionary
+	"""
+	statistic = statistics(analyse_result, pvalue, sample, controle, *mutation)
 	statistic.create_contingency_table()
 	fisher = statistic.apply_fisher_test()
 	results = statistic.check_positiv_sample()
 	return results		
 
 def to_csv(dicti, output_file ="default"):
+	"""
+	a simple function to write result in csv format 
+	:param dicti: a dictionary of statistics result
+	:param output_file: the output file to write the stat result
+	:type dicti: dictionary
+	:type output_file: string 
+
+	"""
 	cpt=0
 	if output_file == "default":
 		output_file = "result.txt"
+
 	with open(output_file, 'wb') as f:
 		for i,j in dicti.iteritems(): 
+			logger.info(i,j)
 			j["sample"]=i
 			w = csv.DictWriter(f,j)
 			if cpt == 0 :
 			    w.writeheader()
 			w.writerow(j)
 			cpt+=1
+		print(output_file)	
+	return output_file	
 
 def to_dict(file):
+	"""
+	a simple function to return a dictionnary from a csv file
+	:param file: file with count result in csv format
+	:type string: file name in string format
+	:return result_dict: values from the treatment
+	:rtype result_dict: dictionary
+	"""
+	result_dict={}
 	with open(file, 'rb') as f:
-		val = csv.DictReader(f)
-		for row in val:
-			print (row)
-    	return val
+		try:
+			reader = csv.DictReader(f)
+			for row in reader:
+				val = row["sample"]
+				result_dict[val] = {}
+				for key,value in row.iteritems():
+					if key != "sample":
+						result_dict[val][key]=value
 
+				pass
+		except Exception as e:
+			raise e("there is a problem with input file ")
+	
+    	return result_dict
+
+def show_mutation(config):
+	"""
+	log function to show the mutation the software is working on 
+	:param config: an object config parser containing the diferent mutation
+	:type config: configparser object 
+	"""
+	design_dict = dict(config.items('mutation_design'))
+	logger.info("show mutation")
+	for name, design in design_dict.iteritems():
+
+		logger.info("%(name_v)s,%(design_v)s"%{"name_v":name,"design_v":design})
 
 if __name__ == '__main__':
 

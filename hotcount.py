@@ -10,12 +10,14 @@ import ipdb
 import pysam
 import scipy.stats as stats
 from python_Bio_Regexp import *
-import logging
-import graypy
+from logsystem import *
 
 
 
 class analysis(object):
+	"""
+	super class for analysisFQ and analysisBAM
+	"""
 
 	def __init__(self):
 		self.file_list=[]
@@ -25,7 +27,10 @@ class analysis(object):
 		self.file_list=[]
 
 	def get_file(self, path):
-		print(self.file_extentions)
+		"""
+		a method to get the file list from the path 
+		:param path: path where the file are stored
+		"""
 		for extention in self.file_extentions : 
 			file_list = glob2.glob(path+extention)
 			if len(file_list) != 0 :
@@ -38,36 +43,51 @@ class analysis(object):
 		# pysam.AlignmentFile("ex1.bam", "rb")
         
 	def count_read( design_file ): 
+		"""
+		an abstract method
+		implemented in the subclass
+		"""
 		raise NotImplementedError
 		
 	
 class analysisFQ(analysis):
-	"""docstring for analysisFQ"""
+	"""
+	docstring for analysisFQ
+	a class inhériting from the analysis class allow to analyse FastQ
+	"""
 	def __init__(self):
 		super(analysisFQ, self).__init__()
-		self.file_extentions = ['*.fastq.*', '*.fq.*', '*.fastq','*.fq','*.FASTQ']
+		self.file_extentions = ['*.fq.*', '*.fastq','*.fq','*.FASTQ','*.fastq.gz', '.fq.gz', '.FASTQ.gz']
 		self.file_list=[]
 		self.analyse_results ={}
 
 		
 	def get_file(self, path):
+		"""
+		this method use the super class method 
+		:param path: path where the file are stored 
+		"""
 		self.file_list = super(analysisFQ, self).get_file(path)
-		print(self.file_list)
 		
 
 	def count_read(self, design_file):
-		design_dict={}
-		for design_values in design_file.items('mutation_design'):
-			design_dict[design_values[0]] = design_values[1] 	 
+		"""
+		this method use pythonBioRegex library to count the number of match between 
+		design regex and sequence in file in FastQ
+		:param design_file: file containing the design regex
+		"""
+		design_dict=dict(design_file.items('mutation_design')) 
 
 		for file in self.file_list:
+			logger.info("treat %s"%file)
+
 			if file.endswith(".gz") :
 				pass
 			self.analyse_results[file] = {}
 			mutation_number_file_variant = {}
 			with open(file, "rU") as handle:
 				records = list(SeqIO.parse(handle, "fastq"))
-  
+  				logger.info("treat %s"%file)
 				for name, design in design_dict.iteritems():
 					mutation_number_by_var_val = 0       
 					print(design)
@@ -84,7 +104,12 @@ class analysisFQ(analysis):
 		return self. analyse_results
 
 class analysisBAM(analysis):
-	"""docstring for analysisBAM"""
+	"""
+	docstring for analysisBAM
+		a class inhériting from the analysis class allow to analyse BAM
+
+
+	"""
 	def __init__(self):
 		super(analysisBAM, self).__init__()
 		self.file_extentions = ['*.bam.*', '*.BAM.*', '*.bam','*.BAM']
@@ -94,14 +119,25 @@ class analysisBAM(analysis):
 
 		
 	def get_file(self, path):
-		self.file_list = super(analysisFQ, self).get_file(path)
+		"""
+		this method use the super class method 
+		:param path: path where the file are stored 
+		"""
+
+		self.file_list = super(analysisBAM, self).get_file(path)
 
 	def count_read(self, design_file):
+		"""
+		this method use pythonBioRegex library to count the number of match between 
+		design regex and sequence in file in FastQ
+		:param design_file: file containing the design regex
+		"""
 		design_dict=dict(design_file.items('mutation_design'))
-		for design_values in design_dict:
-			design_dict[design_values[0]] = Seq(design_values[1]) 
+
 		for file in self.file_list:
 			samfile = pysam.AlignmentFile(file)
+			logger.info("treat %s"%file)
+
 			self.analyse_results[file] = {}
 			mutation_number_file_variant = {}
 			for name, design in design_dict.iteritems():
