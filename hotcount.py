@@ -11,7 +11,7 @@ import pysam
 import scipy.stats as stats
 from python_Bio_Regexp import *
 from logsystem import *
-
+import collections
 
 
 class Analysis(object):
@@ -229,14 +229,18 @@ class statistics(object):
 			for sample2, pvalue in dict_result.iteritems():
 				sample_pvalue_dict[sample_name].append(pvalue)
 			pvalue_tab.append(sample_pvalue_dict)
-		significativ_value_dict = {}
+		significativ_value_dict = collections.OrderedDict()
 		for sample_res in pvalue_tab:
 			nb_neg=0
 			for sample_name, pvalues in sample_res.iteritems():
+				minimal_pvalue=self.pvalue
+				minimal_samplename =""
 				for value in pvalues:
-					if value > self.pvalue:
-						nb_neg +=1
-				significativ_value_dict[sample_name] = nb_neg		
+					if value <minimal_pvalue:
+						minimal_pvalue = value
+						minimal_samplename = sample_name
+				if minimal_pvalue<self.pvalue:
+					significativ_value_dict[minimal_samplename] = minimal_pvalue
 		return significativ_value_dict
 
 
