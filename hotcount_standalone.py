@@ -8,13 +8,15 @@ from hotcount import *
 import scipy.stats as stats
 from logsystem import *
 import csv 
-
+import subprocess
 version = 1.0
 
-class stand_alone(object):
-	"""docstring for HotCount"""
-	def __init__(self):
 
+class StandAlone(object):
+	"""
+
+	"""
+	def __init__(self):
 		self.analyse_result = ""
 		self.stat_result = ""
 
@@ -30,15 +32,13 @@ class stand_alone(object):
 		:type design_file: dictionary
 		:type path : string
 		:type filetype: string
-
 		:type output_file: string
-
 		"""
 		if output_file!=None:
-			self.analyse_result = analysis(filetype, path, design_file)
+			self.analyse_result = Analysis(filetype, path, design_file)
 			csv_analysis = to_csv(self.analyse_result, output_file)
 		else:
-			self.analyse_result = analysis(filetype, path, design_file)
+			self.analyse_result = Analysis(filetype, path, design_file)
 			print(self.analyse_result)
 
 
@@ -47,19 +47,19 @@ class stand_alone(object):
 		a function to make count and statistic treatment
 		:param design_file: file containing the design of the  diferent regex to count
 		:param path: path to the directory where the file are stored
-		:param filetype : number of positiv sample chosen by the user 
+		:param filetype : number of positiv sample chosen by the user
 		:param pvalue: pvalue to choose for analysis
 		:param mutation: list of mutation to study
-		:param sample : number of positiv sample chosen by the user 
+		:param sample : number of positiv sample chosen by the user
 		:param controle: controle value for statistics
-		:param output_file : number of positiv sample chosen by the user 
+		:param output_file : number of positiv sample chosen by the user
 		:type design_file: dictionary
 		:type path : string
 		:type filetype : string
 		:type pvalue: float
 		:type mutation : string
 		:type sample : float
-		:type controle : string	
+		:type controle : string
 		:type output_file: string
 		"""
 		if output_file!=None:
@@ -75,7 +75,7 @@ class stand_alone(object):
 					if j==k:
 						logger.debug(str(i)+','+str(j))
 						op_file.write(str(i)+','+str(j))
-			op_file.close()	
+			op_file.close()
 		else:
 			self.analyse_result = analysis(filetype, path, design_file)
 			print(self.analyse_result)
@@ -84,7 +84,7 @@ class stand_alone(object):
 			for k in xrange(0,int(sample)):
 				for i,j in self.stat_result.iteritems():
 					if j==k:
-						print (i,j)
+						logger.info (i,j)
 
 	def stat(self, countfile, pvalue, sample, mutation, controle, output_file="default"):
 		"""
@@ -120,10 +120,10 @@ class stand_alone(object):
 			op_file.close()	
 		else:
 			self.stat_result = global_stat(countvalue, pvalue, sample, controle, mutation.split(","))
-			for k in xrange(0,int(sample)):
-				for i,j in self.stat_result.iteritems():
-					if j==k:
-						print (i,j)
+#			for k in xrange(0,int(sample)):
+			for i,j in self.stat_result.iteritems():
+#				if j==k:
+				logger.info (i,j)
 			
 
 
@@ -142,12 +142,12 @@ def analysis(tmp_filetype, tmp_path, tmp_design_file):
 	"""
 
 	if tmp_filetype == "FASTQ":
-		FQanalyse = analysisFQ()
+		FQanalyse = AnalysisFQ()
 		FQanalyse.get_file(tmp_path)
 		analyse_result = FQanalyse.count_read(tmp_design_file)
 	elif tmp_filetype == "BAM":
-		BAManalyse = analysisBAM()
-		BAManalyse.get_file(self.file_path)
+		BAManalyse = AnalysisBAM()
+		BAManalyse.get_file(tmp_path)
 		analyse_result = BAManalyse.count_read(tmp_design_file)
 	return analyse_result	
 
@@ -174,55 +174,53 @@ def global_stat(analyse_result, pvalue, sample, controle, mutation):
 	results = statistic.check_positiv_sample()
 	return results		
 
+
 def to_csv(dicti, output_file ="default"):
-	"""
-	a simple function to write result in csv format 
-	:param dicti: a dictionary of statistics result
-	:param output_file: the output file to write the stat result
-	:type dicti: dictionary
-	:type output_file: string 
+    """
+    a simple function to write result in csv format
+    :param dicti: a dictionary of statistics result
+    :param output_file: the output file to write the stat result
+    :type dicti: dictionary
+    :type output_file: string
+    """
+    cpt=0
+    if output_file == "default":
+        output_file = "result.txt"
+    with open(output_file, 'wb') as f:
+        for i,j in dicti.iteritems():
+            logger.info(i,j)
+            j["sample"]=i
+            w = csv.DictWriter(f,j)
+            if cpt == 0 :
+                w.writeheader()
+            w.writerow(j)
+            cpt+=1
+	return output_file
 
-	"""
-	cpt=0
-	if output_file == "default":
-		output_file = "result.txt"
-
-	with open(output_file, 'wb') as f:
-		for i,j in dicti.iteritems(): 
-			logger.info(i,j)
-			j["sample"]=i
-			w = csv.DictWriter(f,j)
-			if cpt == 0 :
-			    w.writeheader()
-			w.writerow(j)
-			cpt+=1
-		print(output_file)	
-	return output_file	
 
 def to_dict(file):
-	"""
-	a simple function to return a dictionnary from a csv file
-	:param file: file with count result in csv format
-	:type string: file name in string format
-	:return result_dict: values from the treatment
-	:rtype result_dict: dictionary
-	"""
-	result_dict={}
-	with open(file, 'rb') as f:
-		try:
-			reader = csv.DictReader(f)
-			for row in reader:
-				val = row["sample"]
-				result_dict[val] = {}
-				for key,value in row.iteritems():
-					if key != "sample":
-						result_dict[val][key]=value
+    """
+    a simple function to return a dictionnary from a csv file
+    :param file: file with count result in csv format
+    :type string: file name in string format
+    :return result_dict: values from the treatment
+    :rtype result_dict: dictionary
+    """
+    result_dict={}
+    with open(file, 'rb') as f:
+        try:
+            reader = csv.DictReader(f)
+            for row in reader:
+                val = row["sample"]
+                result_dict[val] = {}
+                for key,value in row.iteritems():
+                    if key != "sample":
+                        result_dict[val][key]=value
+        except Exception as e:
+            raise e("there is a problem with input file ")
 
-				pass
-		except Exception as e:
-			raise e("there is a problem with input file ")
-	
-    	return result_dict
+    return result_dict
+
 
 def show_mutation(config):
 	"""
@@ -277,7 +275,7 @@ if __name__ == '__main__':
 	else:
 		mutation ="default"
 
-	hotcount_stda = stand_alone()
+	hotcount_stda = StandAlone()
 	analysis_type = args["analysis_type"]
 	logger.info("analysis begin in %s mode" %analysis_type)
 	if args["analysis_type"]=="ALL":

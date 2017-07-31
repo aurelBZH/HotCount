@@ -14,7 +14,7 @@ from logsystem import *
 
 
 
-class analysis(object):
+class Analysis(object):
 	"""
 	super class for analysisFQ and analysisBAM
 	"""
@@ -45,76 +45,76 @@ class analysis(object):
 	def count_read( design_file ): 
 		"""
 		an abstract method
-		implemented in the subclass
+		implemented in the subclass*
+		:param design_file: the file with
 		"""
 		raise NotImplementedError
-		
-	
-class analysisFQ(analysis):
-	"""
-	docstring for analysisFQ
-	a class inhériting from the analysis class allow to analyse FastQ
-	"""
-	def __init__(self):
-		super(analysisFQ, self).__init__()
-		self.file_extentions = ['*.fq.*', '*.fastq','*.fq','*.FASTQ','*.fastq.gz', '.fq.gz', '.FASTQ.gz']
-		self.file_list=[]
-		self.analyse_results ={}
 
-		
-	def get_file(self, path):
-		"""
-		this method use the super class method 
-		:param path: path where the file are stored 
-		"""
-		self.file_list = super(analysisFQ, self).get_file(path)
-		
 
-	def count_read(self, design_file):
-		"""
-		this method use pythonBioRegex library to count the number of match between 
-		design regex and sequence in file in FastQ
-		:param design_file: file containing the design regex
-		"""
-		design_dict=dict(design_file.items('mutation_design')) 
+class AnalysisFQ(Analysis):
+    """
+    docstring for analysisFQ
+    a class inhériting from the analysis class allow to analyse FastQ
+    """
+    def __init__(self):
+        super(AnalysisFQ, self).__init__()
+        self.file_extentions = ['*.fq.*', '*.fastq','*.fq','*.FASTQ','*.fastq.gz', '.fq.gz', '.FASTQ.gz']
+        self.file_list=[]
+        self.analyse_results ={}
 
-		for file in self.file_list:
-			logger.info("treat %s"%file)
 
-			if file.endswith(".gz") :
+    def get_file(self, path):
+        """
+        this method use the super class method
+        :param path: path where the file are stored
+        """
+        self.file_list = super(AnalysisFQ, self).get_file(path)
+
+
+    def count_read(self, design_file):
+        """
+        this method use pythonBioRegex library to count the number of match between
+        design regex and sequence in file in FastQ
+        :param design_file: file containing the design regex
+        """
+        design_dict=dict(design_file.items('mutation_design'))
+
+        for file in self.file_list:
+            logger.info("treat %s"%file)
+
+            if file.endswith(".gz") :
 				pass
-			self.analyse_results[file] = {}
-			mutation_number_file_variant = {}
-			with open(file, "rU") as handle:
-				records = list(SeqIO.parse(handle, "fastq"))
-  				logger.info("treat %s"%file)
-				for name, design in design_dict.iteritems():
-					mutation_number_by_var_val = 0       
-					print(design)
-					reverse_design = regex_seq_finder().regex_reverse_complement(design)
-					mut_number = 0
-					for record in records : 
-						if regex_seq_finder().find_subseq(str(record.seq),design,False, False, True)[1]:
-							mut_number = mut_number+1
-						elif regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1]: 
-							mut_number = mut_number+1 
-					mutation_number_by_var_val= mutation_number_by_var_val + mut_number
-					mutation_number_file_variant[name] = mutation_number_by_var_val
-			self.analyse_results[file] = mutation_number_file_variant 
-		return self. analyse_results
+            self.analyse_results[file] = {}
+            mutation_number_file_variant = {}
+            with open(file, "rU") as handle:
+                records = list(SeqIO.parse(handle, "fastq"))
+                logger.info("treat %s"%file)
+                for name, design in design_dict.iteritems():
+                    mutation_number_by_var_val = 0
+                    print(design)
+                    reverse_design = regex_seq_finder().regex_reverse_complement(design)
+                    mut_number = 0
+                    for record in records :
+                        if regex_seq_finder().find_subseq(str(record.seq),design,False, False, True)[1]:
+                            mut_number = mut_number+1
+                        elif regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1]:
+                            mut_number = mut_number+1
+                    mutation_number_by_var_val= mutation_number_by_var_val + mut_number
+                    mutation_number_file_variant[name] = mutation_number_by_var_val
+            self.analyse_results[file] = mutation_number_file_variant
+        return self. analyse_results
 
-class analysisBAM(analysis):
-	"""
-	docstring for analysisBAM
-		a class inhériting from the analysis class allow to analyse BAM
+class AnalysisBAM(Analysis):
+    """
+    docstring for analysisBAM
+    a class inhériting from the analysis class allow to analyse BAM
 
-
-	"""
-	def __init__(self):
-		super(analysisBAM, self).__init__()
-		self.file_extentions = ['*.bam.*', '*.BAM.*', '*.bam','*.BAM']
-		self.file_list=[]
-		self.analyse_results = {}
+    """
+    def __init__(self):
+        super(AnalysisBAM, self).__init__()
+        self.file_extentions = ['*.bam.*', '*.BAM.*', '*.bam','*.BAM']
+        self.file_list=[]
+        self.analyse_results = {}
 
 
 		
@@ -124,35 +124,33 @@ class analysisBAM(analysis):
 		:param path: path where the file are stored 
 		"""
 
-		self.file_list = super(analysisBAM, self).get_file(path)
+		self.file_list = super(AnalysisBAM, self).get_file(path)
 
-	def count_read(self, design_file):
-		"""
-		this method use pythonBioRegex library to count the number of match between 
-		design regex and sequence in file in FastQ
-		:param design_file: file containing the design regex
-		"""
-		design_dict=dict(design_file.items('mutation_design'))
-
-		for file in self.file_list:
-			samfile = pysam.AlignmentFile(file)
-			logger.info("treat %s"%file)
-
-			self.analyse_results[file] = {}
-			mutation_number_file_variant = {}
-			for name, design in design_dict.iteritems():
-				mutation_number_by_var_val = 0       
-				mut_number = 0
-				for read in samfile.fetch():
-					if regex_seq_finder().find_subseq(read,design,False, False, True)[1]:
-							mut_number = mut_number+1
-					elif regex_seq_finder().find_subseq(read,reverse_design,False, False, True)[1]: 
-							mut_number = mut_number+1 
-				mutation_number_by_var_val= mutation_number_by_var_val + mut_number
-					#ipdb.set_trace()
-				mutation_number_file_variant[name] = mutation_number_by_var_val
-			self.analyse_results[file] = mutation_number_by_var_val 
-			return self. analyse_results    
+    def count_read(self, design_file):
+        """
+        this method use pythonBioRegex library to count the number of match between
+        design regex and sequence in file in FastQ
+        :param design_file: file containing the design regex
+        """
+        design_dict=dict(design_file.items('mutation_design'))
+        for file in self.file_list:
+            samfile = pysam.AlignmentFile(file)
+            logger.info("treat %s"%file)
+            self.analyse_results[file] = {}
+            mutation_number_file_variant = {}
+            for name, design in design_dict.iteritems():
+                mutation_number_by_var_val = 0
+                reverse_design = regex_seq_finder().regex_reverse_complement(design)
+                mut_number = 0
+                for read in samfile.fetch():
+                    if regex_seq_finder().find_subseq(read,design,False, False, True)[1]:
+                        mut_number = mut_number+1
+                    elif regex_seq_finder().find_subseq(read,reverse_design,False, False, True)[1]:
+                        mut_number = mut_number+1
+                mutation_number_by_var_val= mutation_number_by_var_val + mut_number
+                mutation_number_file_variant[name] = mutation_number_by_var_val
+            self.analyse_results[file] = mutation_number_by_var_val
+        return self. analyse_results
 
 class statistics(object):
 	"""docstring for statistics
@@ -163,7 +161,7 @@ class statistics(object):
 		"""
 		:param count_table: dictionary of count result
 		:param pvalue: the pvalue to use for stat analysis
-		:param samle: the number of positiv sample 
+		:param samle: the number of positiv sample
 		:param controle: regex to use as controle during the stat analysis
 		:param mutation: mutation to analyse
 		:type count_table: dictionary
@@ -185,6 +183,7 @@ class statistics(object):
 	def create_contingency_table(self):
 		"""
 		a methode to create a contingency table
+		usable for fisher test.
 
 		"""
 		for sample in self.count_table:
@@ -204,7 +203,7 @@ class statistics(object):
 			
 	def apply_fisher_test(self):
 		"""
-		a method to apply fisher test on 
+		a method to apply fisher test on. It's a statistic test to check if a test
 		"""
 		fisher_hash_result={}
 		# ipdb.set_trace()
@@ -242,6 +241,6 @@ class statistics(object):
 
 
 if __name__ == '__main__':
-	analysisFQ().get_file("resources/")
-	analysisFQ.count_read()
+	AnalysisFQ().get_file("resources/")
+	AnalysisFQ.count_read()
 	statistics()

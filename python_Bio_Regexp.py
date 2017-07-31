@@ -8,8 +8,13 @@ import scipy
 
 
 class regex_seq_finder(object):
-	"""docstring for regex_seq_finder"""
+	"""
+	a class to find and count mutation based on regular expression
+	"""
 	def __init__(self):
+		"""
+		init method
+		"""
 		self.sequence = ""
 		self.regex_subseq = ""
 		self.nuctype = "DNA"
@@ -19,6 +24,13 @@ class regex_seq_finder(object):
 
 
 	def regex_complement(self, regex_subseq, nuctype="DNA"):
+		""" 
+		a class to find the complement of a regular expression working for DNA and RNA
+		:param regex_subseq: the content af the regular expression
+		:param nuctype: type of nucleic acid
+		:type regex_subseq: string
+		:type nuctype: string
+		"""
 		self.regex_subseq = regex_subseq
 		pattern = ""
 		for nt in self.regex_subseq:
@@ -41,6 +53,11 @@ class regex_seq_finder(object):
 
 
 	def regex_reverse(self, regex_subseq):
+		"""
+		a function to make the reverse of a regular expression
+		:param regex_subseq: the content of a regular expression
+		:type regex_subseq: string
+		"""
 		if len(regex_subseq) == 0:
 			return self.reverse_str
 		
@@ -111,6 +128,12 @@ class regex_seq_finder(object):
 		return self.reverse_str	
 
 	def verify_regex(self,regex, nuctype = "DNA"):
+		"""
+		:param regex: the content of a regular expression
+		:param nuctype: type of nucleic acid
+		:type regex: string
+		:type nuctype: string
+		"""
 		cpt_parenthesis = 0
 		cpt_bracket = 0 
 		cpt_brace = 0
@@ -152,6 +175,23 @@ class regex_seq_finder(object):
 
 
 	def find_subseq(self, sequence, regex, number_of_match, position_of_match, match, nuctype="DNA", overlap=False):
+		"""
+		:param sequence:the sequence where to search the regular expression
+		:param regex: the regular expression to find
+		:param number_of_match: a param to set the method to return the number of match between regular expression and sequence
+		:param position _of_match: a param to set the method for returning the matching position
+		:param match: a param to set the method for returning if there is a match or not
+		:param overlap: a param for choosing if it can have an overlap between 2 match
+		:type sequence: string
+		:type regex: string
+		:type number_of_match: boolean
+		:type position_of_match: boolean
+		:type match: boolean
+		:type overlap: boolean
+
+		"""
+
+
 		self.sequence = sequence	
 		self.nuctype = nuctype
 		self.regex_subseq = regex	
@@ -196,6 +236,13 @@ class regex_seq_finder(object):
 
 	
 	def regex_reverse_complement(self, regex, nuctype="DNA"):
+		"""
+		a simple method to do the reverse and the complement in the same time 
+		:param regex: the regular expression to reverse complement
+		:param nuctype: the type of nucleic acid
+		type regex: string
+		type nuctype: string
+		"""
 		self.verify_regex(regex,nuctype = nuctype)
 		reverse_regex = self.regex_reverse(regex)
 		
