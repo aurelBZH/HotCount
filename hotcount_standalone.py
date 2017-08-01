@@ -1,5 +1,5 @@
-#/usr/bin/python
-#coding: utf-8
+#! /usr/bin/env python 2.7
+# coding: utf-8
 from __future__ import print_function
 import argparse
 import ConfigParser
@@ -249,7 +249,7 @@ if __name__ == '__main__':
 	all_parser.add_argument("-o","--output", help="result file")
 	all_parser.add_argument("-p","--pvalue", default=0.001, help="pvalue", type=int)
 	all_parser.add_argument("-s", "--sample", default=6, help="max number of positive samples")
-	all_parser.add_argument("-m", "--mutation", required= True,  help=" mutation to be analysed, separated by a ',' " )	
+	all_parser.add_argument("-m", "--mutation", required= True,  help=" mutation to be analysed in a string, separated by a ',' " )
 	all_parser.add_argument("-a","--controle",default="all", help="controle regex")
 
 	count_parser = sub.add_parser("count")
@@ -262,7 +262,7 @@ if __name__ == '__main__':
 	stat_parser.add_argument("-c","--countfile", required=True, help="file with count result in csv")
 	stat_parser.add_argument("-p","--pvalue", default=0.001, help="pvalue", type=int)
 	stat_parser.add_argument("-s", "--sample", default=6, help="max number of positive samples")
-	stat_parser.add_argument("-m", "--mutation", required= True,  help=" mutation to be analysed, separated by a ',' " )
+	stat_parser.add_argument("-m", "--mutation", required= True,  help=" mutation to be analysed in a string, separated by a ',' " )
 	stat_parser.add_argument("-o","--output", help="result file")
 	stat_parser.add_argument("-a","--controle", default="all", help="controle regex")
 
