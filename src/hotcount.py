@@ -3,10 +3,6 @@
 from __future__ import print_function
 from Bio import SeqIO
 import glob2
-from Bio.Seq import Seq
-from Bio.Alphabet import generic_dna
-from Bio import SeqUtils
-import ipdb
 import pysam
 import scipy.stats as stats
 from python_Bio_Regexp import *

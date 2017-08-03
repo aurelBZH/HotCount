@@ -1,14 +1,14 @@
 #! /usr/bin/env python 2.7
 # coding: utf-8
 from __future__ import print_function
-import argparse
+
 import ConfigParser
-import scipy
-from hotcount import *
-import scipy.stats as stats
+import argparse
+import csv
 from logsystem import *
-import csv 
-import subprocess
+import re
+from hotcount import *
+
 version = 1.0
 
 
