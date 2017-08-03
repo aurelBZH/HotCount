@@ -2,9 +2,9 @@
 # coding: utf-8
 
 from setuptools import setup, find_packages
-import python_Bio_Regexp
-import hotcount
-import hotcount_standalone
+#import python_Bio_Regexp
+#import hotcount
+#import hotcount_standalone
 
 
 setup(
@@ -41,12 +41,12 @@ install_requires=["alabaster==0.7.10",
 "py==1.4.32",
 "Pygments==2.1.3",
 "pyparsing==2.2.0",
-"pysam==0.11.2.2",
+"pysam",
 "pytest==3.0.5",
 "python-dateutil==2.6.0",
 "pytz==2017.2",
 "requests==2.14.2",
-"scipy==0.19.0",
+"scipy==0.19.1",
 "simplegeneric==0.8.1",
 "six==1.10.0",
 "snowballstemmer==1.2.1",
