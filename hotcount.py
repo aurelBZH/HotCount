@@ -52,57 +52,57 @@ class Analysis(object):
 
 
 class AnalysisFQ(Analysis):
-    """
-    docstring for analysisFQ
-    a class inhériting from the analysis class allow to analyse FastQ
-    """
-    def __init__(self):
-        super(AnalysisFQ, self).__init__()
-        self.file_extentions = ['*.fq.*', '*.fastq','*.fq','*.FASTQ','*.fastq.gz', '.fq.gz', '.FASTQ.gz']
-        self.file_list=[]
-        self.analyse_results ={}
+	"""
+	docstring for analysisFQ
+	a class inhériting from the analysis class allow to analyse FastQ file
+	"""
+	def __init__(self):
+		super(AnalysisFQ, self).__init__()
+		self.file_extentions = ['*.fq.*', '*.fastq','*.fq','*.FASTQ','*.fastq.gz', '.fq.gz', '.FASTQ.gz']
+		self.file_list=[]
+		self.analyse_results ={}
 
 
-    def get_file(self, path):
-        """
-        this method use the super class method
-        :param path: path where the file are stored
-        """
-        self.file_list = super(AnalysisFQ, self).get_file(path)
+	def get_file(self, path):
+		"""
+		this method use the super class method
+		:param path: path where the file are stored
+		"""
+		self.file_list = super(AnalysisFQ, self).get_file(path)
 
 
-    def count_read(self, design_file):
-        """
-        this method use pythonBioRegex library to count the number of match between
-        design regex and sequence in file in FastQ
-        :param design_file: file containing the design regex
-        """
-        design_dict=dict(design_file.items('mutation_design'))
+	def count_read(self, design_file):
+		"""
+		this method use pythonBioRegex library to count the number of match between
+		design regex and sequence in file in FastQ
+		:param design_file: file containing the design regex
+		"""
+		design_dict=dict(design_file.items('mutation_design'))
 
-        for file in self.file_list:
-            logger.info("treat %s"%file)
+		for file in self.file_list:
+			logger.info("treat %s"%file)
 
-            if file.endswith(".gz") :
+			if file.endswith(".gz") :
 				pass
-            self.analyse_results[file] = {}
-            mutation_number_file_variant = {}
-            with open(file, "rU") as handle:
-                records = list(SeqIO.parse(handle, "fastq"))
-                logger.info("treat %s"%file)
-                for name, design in design_dict.iteritems():
-                    mutation_number_by_var_val = 0
-                    print(design)
-                    reverse_design = regex_seq_finder().regex_reverse_complement(design)
-                    mut_number = 0
-                    for record in records :
-                        if regex_seq_finder().find_subseq(str(record.seq),design,False, False, True)[1]:
-                            mut_number = mut_number+1
-                        elif regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1]:
-                            mut_number = mut_number+1
-                    mutation_number_by_var_val= mutation_number_by_var_val + mut_number
-                    mutation_number_file_variant[name] = mutation_number_by_var_val
-            self.analyse_results[file] = mutation_number_file_variant
-        return self. analyse_results
+			self.analyse_results[file] = {}
+			mutation_number_file_variant = {}
+			with open(file, "rU") as handle:
+				records = list(SeqIO.parse(handle, "fastq"))
+				logger.info("treat %s"%file)
+				for name, design in design_dict.iteritems():
+					mutation_number_by_var_val = 0
+					print(design)
+					reverse_design = regex_seq_finder().regex_reverse_complement(design)
+					mut_number = 0
+					for record in records :
+						if regex_seq_finder().find_subseq(str(record.seq),design,False, False, True)[1]:
+							mut_number = mut_number+1
+						elif regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1]:
+							mut_number = mut_number+1
+					mutation_number_by_var_val= mutation_number_by_var_val + mut_number
+					mutation_number_file_variant[name] = mutation_number_by_var_val
+			self.analyse_results[file] = mutation_number_file_variant
+		return self. analyse_results
 
 class AnalysisBAM(Analysis):
     """
@@ -120,8 +120,8 @@ class AnalysisBAM(Analysis):
 		
 	def get_file(self, path):
 		"""
-		this method use the super class method 
-		:param path: path where the file are stored 
+		this method use the super class method
+		:param path: path where the file are stored
 		"""
 
 		self.file_list = super(AnalysisBAM, self).get_file(path)
