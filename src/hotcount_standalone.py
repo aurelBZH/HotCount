@@ -35,10 +35,10 @@ class StandAlone(object):
         :type output_file: string
         """
         if output_file!=None:
-            self.analyse_result = Analysis(filetype, path, design_file)
+            self.analyse_result = analysis(filetype, path, design_file)
             csv_analysis = to_csv(self.analyse_result, output_file)
         else:
-            self.analyse_result = Analysis(filetype, path, design_file)
+            self.analyse_result = analysis(filetype, path, design_file)
             print(self.analyse_result)
 
 
@@ -197,7 +197,7 @@ def to_csv(dicti, output_file ="default"):
                 w.writeheader()
             w.writerow(j)
             cpt+=1
-	return output_file
+    return output_file
 
 
 def to_dict(file):
@@ -242,7 +242,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 
 	sub = parser.add_subparsers(help="type of analysis",dest="analysis_type")
-	all_parser = sub.add_parser("ALL")
+	all_parser = sub.add_parser("all")
 	all_parser.add_argument('--designfile',required=True,help='path to the design file, the design file is the file containing the variant')
 	all_parser.add_argument('--path',required=True, help='where the sample file are stored')
 	all_parser.add_argument('-f','--filetype', default='FASTQ', help='file type to process')
