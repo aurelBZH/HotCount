@@ -159,7 +159,7 @@ class statistics(object):
 		:param pvalue: the pvalue to use for stat analysis
 		:param samle: the number of positiv sample
 		:param controle: regex to use as controle during the stat analysis
-		:param mutation: mutation to analyse
+		:param mutation: mutation to analysecount_value2
 		:type count_table: dictionary
 		:type pvalue: float
 		:type sample: int
@@ -177,7 +177,7 @@ class statistics(object):
 
 
 	def create_contingency_table(self):
-		"""
+		"""count_value2
 		a methode to create a contingency table
 		usable for fisher test.
 
@@ -191,6 +191,7 @@ class statistics(object):
 						raise ValueError("Nombre de read porteur de l'expression régulière \"controle\" infèrieur" +
 							"au nombre de read muté. Rechercher une erreur dans l'expression régulière.")
 					self.contingency_table[sample] = [self.count_table[sample][j],self.count_table[sample][self.controle]]
+	#si controle =all (soustraire)
 
 				except ValueError:
 					raise ValueError("problem in value error ")
@@ -207,10 +208,10 @@ class statistics(object):
 			fisher_hash_result[sample1] = {}
 			for sample2, count_value2 in self.contingency_table.iteritems():
 				if sample1 != sample2:
-
 					fisher_result = stats.fisher_exact([count_value1, count_value2],"greater")
 					fisher_hash_result[sample1][sample2] = fisher_result[1]
 		self.fisher_matrix = fisher_hash_result
+		print(self.fisher_matrix)
 		return self.fisher_matrix	
 
 	def check_positiv_sample(self):

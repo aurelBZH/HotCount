@@ -1,10 +1,10 @@
 #/usr/bin/python
 # coding: utf-8 
 import pytest
-from hotCount_remastered import python_Bio_Regexp
+from src import python_Bio_Regexp
 # from datadiff.tools import assert_equal 
 # from datadiff import diff
-from hotCount_remastered import hotcount 
+from src import hotcount
 # @pytest.mark.xfail
 
 def test_simplecase(reg):
