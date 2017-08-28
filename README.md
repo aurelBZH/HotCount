@@ -5,7 +5,7 @@ this programe is based on a library i built, named pythonBioRegex. This library 
 installation
 
 the best method to install our software is write this command line in the terminal:
-
+    git clone https://github.com/aurelBZH/HotCount.git
      pip install git+https://github.com/aurelBZH/HotCount.git
 
 you can also download the source in the github repository, open a terminal, go to the directory where the software is downloaded
