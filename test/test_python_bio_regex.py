@@ -102,7 +102,7 @@ def test_verify_regex_RNA(reg):
 
 def test_find_subseq3(reg):
 	with pytest.raises(AssertionError) as excinfo:
-		assert_equal(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False), ["ATCT{1,12}",0])
+		assert reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False)== ["ATCT{1,12}",0]
 	excinfo
 
 def test_regex_complement(reg):

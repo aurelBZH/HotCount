@@ -190,9 +190,7 @@ class regex_seq_finder(object):
 		:type overlap: boolean
 
 		"""
-
-
-		self.sequence = sequence	
+		self.sequence = sequence
 		self.nuctype = nuctype
 		self.regex_subseq = regex	
 		pattern = ""
@@ -248,25 +246,3 @@ class regex_seq_finder(object):
 		
 		return self.regex_complement(reverse_regex, nuctype=nuctype)
 
-
-
-
-
-
-
-if __name__ == '__main__':
-# 	print("test")
-# 	# print(regex_seq_finder(object).regex_complement(r"AW{1,11}(CG){2,22}"))
-# 	# print(regex_seq_finder(object).find_subseq("ATCTTTTTATTTCGCGCGGGGAAA",r"AW{1,10}(CG){1,10}", True, False ))
-	# regex1 = r"AW{1,10}(CG){1,10}"
-	# rev = regex_seq_finder().regex_reverse_complement(regex1, nuctype="DNA")
-	# print rev 
-	# print regex_seq_finder().find_subseq("ATCTTTTTATTTCGCGCGGGGAAA",regex1, True, False )
-	print (regex_seq_finder().find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False))
-	assert_equal(regex_seq_finder().find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}", False, True, False), ["ATCT{1,12}", "test"])
-
-	# print regex_seq_finder().regex_reverse(val)
-# 	# print(regex_seq_finder(object).regex_complement(val))
-	print( regex_seq_finder().verify_regex(r"ATC[CG]{1,11}"))
-	# print regex_seq_finder().regex_reverse_complement("ATC{1,11}")
-	# print regex_seq_finder().regex_reverse_complement("AUCUCCCC", nuctype="RNA")

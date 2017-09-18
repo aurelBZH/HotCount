@@ -17,7 +17,7 @@ class Analysis(object):
 
 	def __init__(self):
 		self.file_list=[]
-		self.design_file = ""
+		self.design_dict = ""
 		self.analyse_results = {}
 		self.file_extentions = []
 		self.file_list=[]
@@ -27,22 +27,30 @@ class Analysis(object):
 		a method to get the file list from the path 
 		:param path: path where the file are stored
 		"""
+		print(path)
 		for extention in self.file_extentions : 
+			print (extention)
 			file_list = glob2.glob(path+extention)
+			print(file_list)
 			if len(file_list) != 0 :
 					break
-		if len(file_list) == 0 :	 
-			raise Exception("the path is incorrect or the file extension"+ 
-				"is bad,in fact the program can't find the file ")
-		self.file_list = file_list                                                                            
-		return self.file_list
+		if len(file_list) == 0 :
+			raise Exception("the path is incorrect or the file extension "+
+		 		"is bad,in fact the program can't find the file ")
+		print(file_list)
+		print(type(file_list))
+
+		self.file_list = file_list
+		print (type(self.file_list))
+		print (file_list)
+		return file_list
 		# pysam.AlignmentFile("ex1.bam", "rb")
         
-	def count_read( design_file ): 
+	def count_read( design_dict ):
 		"""
 		an abstract method
 		implemented in the subclass*
-		:param design_file: the file with
+		:param design_dict: the file with
 		"""
 		raise NotImplementedError
 
@@ -67,14 +75,12 @@ class AnalysisFQ(Analysis):
 		self.file_list = super(AnalysisFQ, self).get_file(path)
 
 
-	def count_read(self, design_file):
+	def count_read(self, design_dict):
 		"""
 		this method use pythonBioRegex library to count the number of match between
 		design regex and sequence in file in FastQ
-		:param design_file: file containing the design regex
+		:param design_dict: file containing the design regex
 		"""
-		design_dict=dict(design_file.items('mutation_design'))
-
 		for file in self.file_list:
 			logger.info("treat %s"%file)
 
@@ -108,7 +114,7 @@ class AnalysisBAM(Analysis):
     """
     def __init__(self):
         super(AnalysisBAM, self).__init__()
-        self.file_extentions = ['*.bam.*', '*.BAM.*', '*.bam','*.BAM']
+        self.file_extentions = ['*.bam','*.BAM']
         self.file_list=[]
         self.analyse_results = {}
 
@@ -122,26 +128,26 @@ class AnalysisBAM(Analysis):
 
 		self.file_list = super(AnalysisBAM, self).get_file(path)
 
-    def count_read(self, design_file):
+    def count_read(self, design_dict):
         """
         this method use pythonBioRegex library to count the number of match between
         design regex and sequence in file in FastQ
-        :param design_file: file containing the design regex
+        :param design_dict: file containing the design regex
         """
-        design_dict=dict(design_file.items('mutation_design'))
         for file in self.file_list:
-            samfile = pysam.AlignmentFile(file)
+
+            samfile = pysam.samfile(file)
             logger.info("treat %s"%file)
             self.analyse_results[file] = {}
             mutation_number_file_variant = {}
-            for name, design in design_dict.iteritems():
+            for name, design in design_dict.iteritems(until_eof=True):
                 mutation_number_by_var_val = 0
                 reverse_design = regex_seq_finder().regex_reverse_complement(design)
                 mut_number = 0
                 for read in samfile.fetch():
-                    if regex_seq_finder().find_subseq(read,design,False, False, True)[1]:
+                    if regex_seq_finder().find_subseq(str(read),design,False, False, True)[1]:
                         mut_number = mut_number+1
-                    elif regex_seq_finder().find_subseq(read,reverse_design,False, False, True)[1]:
+                    elif regex_seq_finder().find_subseq(str(read),reverse_design,False, False, True)[1]:
                         mut_number = mut_number+1
                 mutation_number_by_var_val= mutation_number_by_var_val + mut_number
                 mutation_number_file_variant[name] = mutation_number_by_var_val
@@ -157,13 +163,14 @@ class statistics(object):
 		"""
 		:param count_table: dictionary of count result
 		:param pvalue: the pvalue to use for stat analysis
-		:param samle: the number of positiv sample
+		:param sample: the number of positiv sample
 		:param controle: regex to use as controle during the stat analysis
 		:param mutation: mutation to analysecount_value2
 		:type count_table: dictionary
 		:type pvalue: float
 		:type sample: int
 		:type controle: string
+
 		:type mutation: string
 		"""
 		self.contingency_table = {}
@@ -183,20 +190,21 @@ class statistics(object):
 
 		"""
 		for sample in self.count_table:
-			# ipdb.set_trace()
 			logger.info(self.mutation)
 			for j in self.mutation:
+				if j not in self.contingency_table:
+					self.contingency_table[j]={}
 				try:
 					if self.count_table[sample][j] > self.count_table[sample][self.controle] :
 						raise ValueError("Nombre de read porteur de l'expression régulière \"controle\" infèrieur" +
 							"au nombre de read muté. Rechercher une erreur dans l'expression régulière.")
-					self.contingency_table[sample] = [self.count_table[sample][j],self.count_table[sample][self.controle]]
+					self.contingency_table[j][sample] = [self.count_table[sample][j],self.count_table[sample][self.controle]]
 	#si controle =all (soustraire)
 
 				except ValueError:
 					raise ValueError("problem in value error ")
-					# print(self.contingency_table)		
-		return self.contingency_table 
+					# print(self.contingency_table)
+		return self.contingency_table
 			
 	def apply_fisher_test(self):
 		"""
@@ -204,44 +212,53 @@ class statistics(object):
 		"""
 		fisher_hash_result={}
 		# ipdb.set_trace()
-		for sample1, count_value1  in self.contingency_table.iteritems():
-			fisher_hash_result[sample1] = {}
-			for sample2, count_value2 in self.contingency_table.iteritems():
-				if sample1 != sample2:
-					fisher_result = stats.fisher_exact([count_value1, count_value2],"greater")
-					fisher_hash_result[sample1][sample2] = fisher_result[1]
+		for mutation, contingency_table in self.contingency_table.iteritems():
+			if mutation not in fisher_hash_result:
+				fisher_hash_result[mutation]={}
+			for sample1, count_value1  in contingency_table.iteritems():
+				fisher_hash_result[mutation][sample1] = {}
+				for sample2, count_value2 in contingency_table.iteritems():
+					if sample1 != sample2:
+						logger.debug(count_value1)
+						logger.debug(count_value2)
+						fisher_result = stats.fisher_exact([count_value1, count_value2],"greater")
+						fisher_hash_result[mutation][sample1][sample2] = fisher_result[1]
 		self.fisher_matrix = fisher_hash_result
-		print(self.fisher_matrix)
-		return self.fisher_matrix	
+		return self.fisher_matrix
 
 	def check_positiv_sample(self):
 		"""
 		a method to check sample positivity
 		"""
 		positivity = False
-		pvalue_tab= []
 		sample_pvalue_dict = {}
-		for sample_name, dict_result in self.fisher_matrix.iteritems() :
-			sample_pvalue_dict = {sample_name: []}
-			for sample2, pvalue in dict_result.iteritems():
-				sample_pvalue_dict[sample_name].append(pvalue)
-			pvalue_tab.append(sample_pvalue_dict)
-		significativ_value_dict = collections.OrderedDict()
-		for sample_res in pvalue_tab:
-			nb_neg=0
-			for sample_name, pvalues in sample_res.iteritems():
-				minimal_pvalue=self.pvalue
-				minimal_samplename =""
-				for value in pvalues:
-					if value <minimal_pvalue:
-						minimal_pvalue = value
-						minimal_samplename = sample_name
-				if minimal_pvalue<self.pvalue:
-					significativ_value_dict[minimal_samplename] = minimal_pvalue
+		for mutation, dict_result in self.fisher_matrix.iteritems() :
+			if mutation not in sample_pvalue_dict:
+				sample_pvalue_dict[mutation]= {}
+			for sample_name, result in dict_result.iteritems():
+				sample_pvalue_dict[mutation][sample_name]=[]
+				for sample2, pvalue in result.iteritems():
+					sample_pvalue_dict[mutation][sample_name].append(pvalue)
+		significativ_value_dict = {}
+		for mutation, final_pvalue_dict in sample_pvalue_dict.iteritems():
+			result_by_mutation=[]
+			for sample_name, pvalues in final_pvalue_dict.iteritems():
+				nb_neg = 0
+
+				for i in range(0, len(pvalues)):
+					if pvalues[i]>self.pvalue:
+						nb_neg+=1
+				maximal_pvalue = sorted(pvalues)[nb_neg-1]
+
+				result_by_mutation.append([sample_name,nb_neg,maximal_pvalue])
+
+			significativ_value_dict[mutation]=result_by_mutation
+
+
 		return significativ_value_dict
 
 
-if __name__ == '__main__':
-	AnalysisFQ().get_file("resources/")
-	AnalysisFQ.count_read()
-	statistics()
+#if __name__ == '__main__':
+#	AnalysisFQ().get_file("resources/")
+#	AnalysisFQ.count_read()
+#	statistics()
