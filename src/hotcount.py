@@ -8,7 +8,7 @@ import scipy.stats as stats
 from python_Bio_Regexp import *
 from logsystem import *
 import collections
-
+import pandas
 
 class Analysis(object):
 	"""
@@ -46,7 +46,7 @@ class Analysis(object):
 		return file_list
 		# pysam.AlignmentFile("ex1.bam", "rb")
         
-	def count_read( design_dict ):
+	def count_read(design_dict):
 		"""
 		an abstract method
 		implemented in the subclass*
@@ -107,20 +107,20 @@ class AnalysisFQ(Analysis):
 		return self. analyse_results
 
 class AnalysisBAM(Analysis):
-    """
-    docstring for analysisBAM
-    a class inhériting from the analysis class allow to analyse BAM
+	"""
+	docstring for analysisBAM
+	a class inhériting from the analysis class allow to analyse BAM
 
-    """
-    def __init__(self):
-        super(AnalysisBAM, self).__init__()
-        self.file_extentions = ['*.bam','*.BAM']
-        self.file_list=[]
-        self.analyse_results = {}
+	"""
+	def __init__(self):
+		super(AnalysisBAM, self).__init__()
+		self.file_extentions = ['*.bam','*.BAM']
+		self.file_list=[]
+		self.analyse_results = {}
 
 
 		
-	def get_file(self, path):
+	def get_file(self, path ):
 		"""
 		this method use the super class method
 		:param path: path where the file are stored
@@ -128,31 +128,35 @@ class AnalysisBAM(Analysis):
 
 		self.file_list = super(AnalysisBAM, self).get_file(path)
 
-    def count_read(self, design_dict):
-        """
-        this method use pythonBioRegex library to count the number of match between
-        design regex and sequence in file in FastQ
-        :param design_dict: file containing the design regex
-        """
-        for file in self.file_list:
+	def count_read(self, design_dict):
+		"""
+		this method use pythonBioRegex library to count the number of match between
+		design regex and sequence in file in BAM
+		:param design_dict: file containing the design regex
+		"""
+		read_set = set()
+		for file in self.file_list:
+			samfile = pysam.AlignmentFile(file)
+			logger.info("treat %s"%file)
+			self.analyse_results[file] = {}
+			mutation_number_file_variant = {}
+			for name, design in design_dict.iteritems():
+				mutation_number_by_var_val = 0
+				reverse_design = regex_seq_finder().regex_reverse_complement(design)
+				mut_number = 0
+				for read in samfile.fetch(until_eof=True):
 
-            samfile = pysam.samfile(file)
-            logger.info("treat %s"%file)
-            self.analyse_results[file] = {}
-            mutation_number_file_variant = {}
-            for name, design in design_dict.iteritems(until_eof=True):
-                mutation_number_by_var_val = 0
-                reverse_design = regex_seq_finder().regex_reverse_complement(design)
-                mut_number = 0
-                for read in samfile.fetch():
-                    if regex_seq_finder().find_subseq(str(read),design,False, False, True)[1]:
-                        mut_number = mut_number+1
-                    elif regex_seq_finder().find_subseq(str(read),reverse_design,False, False, True)[1]:
-                        mut_number = mut_number+1
-                mutation_number_by_var_val= mutation_number_by_var_val + mut_number
-                mutation_number_file_variant[name] = mutation_number_by_var_val
-            self.analyse_results[file] = mutation_number_by_var_val
-        return self. analyse_results
+					str_read=str(read).split("\t")
+					if str_read[0] not in read_set:
+						if regex_seq_finder().find_subseq(str_read[9],design,False, False, True)[1]:
+							mut_number = mut_number+1
+						elif regex_seq_finder().find_subseq(str_read[9],reverse_design,False, False, True)[1]:
+							mut_number = mut_number+1
+					read_set.add(str_read[0])
+				mutation_number_by_var_val = mutation_number_by_var_val + mut_number
+				mutation_number_file_variant[name] = mutation_number_by_var_val
+			self.analyse_results[file] = mutation_number_by_var_val
+		return self. analyse_results
 
 class statistics(object):
 	"""docstring for statistics
@@ -242,23 +246,12 @@ class statistics(object):
 		significativ_value_dict = {}
 		for mutation, final_pvalue_dict in sample_pvalue_dict.iteritems():
 			result_by_mutation=[]
+
 			for sample_name, pvalues in final_pvalue_dict.iteritems():
-				nb_neg = 0
-
-				for i in range(0, len(pvalues)):
-					if pvalues[i]>self.pvalue:
-						nb_neg+=1
-				maximal_pvalue = sorted(pvalues)[nb_neg-1]
-
-				result_by_mutation.append([sample_name,nb_neg,maximal_pvalue])
+				sorted_pvalue_list = sorted(pvalues, reverse=True)
+				result_by_mutation.append([sample_name,sorted_pvalue_list])
 
 			significativ_value_dict[mutation]=result_by_mutation
 
 
 		return significativ_value_dict
-
-
-#if __name__ == '__main__':
-#	AnalysisFQ().get_file("resources/")
-#	AnalysisFQ.count_read()
-#	statistics()

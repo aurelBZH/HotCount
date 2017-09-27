@@ -36,10 +36,19 @@ class StandAlone(object):
         """
         if output_file!=None:
             self.analyse_result = analysis(filetype, path, design_dict)
-            csv_analysis = to_csv(self.analyse_result, output_file)
+            try:
+                op_file = open(output_file, "w")
+            except Exception as e:
+                raise Exception("there is a problem with the file opening")
+            self.analyse_result = analysis(filetype, path, design_dict)
+            op_file.write(to_csv(self.analyse_result, output_file))
+            print ("inpu"+str(output_file))
         else:
             self.analyse_result = analysis(filetype, path, design_dict)
+            csv_analysis = to_csv(self.analyse_result, output_file)
+            logger.info(csv_analysis)
 
+            print ("out"+str(output_file))
 
     def ALL(self,design_dict, path, filetype, pvalue, mutation, sample, controle, output_file="default"):
         """
@@ -115,24 +124,26 @@ class StandAlone(object):
             for mut,result in self.stat_result.items():
                 op_file.write("results for the "+str(mut)+" mutation vs all")
                 logger.info("results for the "+str(mut)+" mutation vs all")
-                for i in range(0, int(sample)+1):
+                for i in range(0, int(sample)):
                     op_file.write("Who is significant with only  " + str(
 
-                        i) + " positive  sample  in this library (p<=" + str(pvalue) + ")")
+                        i+1) + " positive  sample  in this library (p<=" + str(pvalue) + ")")
                     logger.info("Who is significant with only " + str(
-                        i) + " positive  sample  in this library (p<=" + str(pvalue) + ")")
+                        i+1) + " positive  sample  in this library (p<=" + str(pvalue) + ")")
                     a=False
+                    count_significativ_sample=0
                     for result_by_file in result:
-
-                        if result_by_file[1] == i:
+                        if result_by_file[1][i]<=pvalue:
+                            count_significativ_sample+=1
                             a=True
                             op_file.write(
-                               "the sample" + str(result_by_file[0]) + " is statisticaly significant with a p-value of " + str(
-                                   result[2]))
+                               "the sample" + str(result_by_file[0]) + " is statisticaly significant with a p-value of "+str(result_by_file[1][i]))
                             logger.info(
                                "the sample" + str(result_by_file[0]) + " is statisticaly significant with a p-value of " + str(
-                                   result_by_file[2]))
-
+                                   result_by_file[1][i]))
+                    if count_significativ_sample !=i:
+                        op_file.write("the significativ sample number don't match the hypothesis")
+                        logger.info("the significativ sample number don't match the hypothesis")
                     if(a==False):
                        op_file.write("none")
                        logger.info("none")
@@ -140,29 +151,30 @@ class StandAlone(object):
 
 
 def analysis(tmp_filetype, tmp_path, tmp_design_dict):
-	"""
-	a function regrouping the count analysis 
-	:param tmp_filetype: input file type
-	:param tmp_path: path of input files
-	:param tmp_design_dict: design_dict containing design
-	:type tmp_filetype: string
-	:type tmp_path: string
-	:type tmp_design_dict: string
-	:return analyse_result: result of the count analysis 
-	:rtype analyse_result: dictionary
-	
-	"""
-        print(tmp_design_dict)
+    """
+    a function regrouping the count analysis
+    :param tmp_filetype: input file type
+    :param tmp_path: path of input files
+    :param tmp_design_dict: design_dict containing design
+    :type tmp_filetype: string
+    :type tmp_path: string
+    :type tmp_design_dict: string
+    :return analyse_result: result of the count analysis
+    :rtype analyse_result: dictionary
 
-	if tmp_filetype == "FASTQ":
-		FQanalyse = AnalysisFQ()
-		FQanalyse.get_file(tmp_path)
-		analyse_result = FQanalyse.count_read(tmp_design_dict)
-	elif tmp_filetype == "BAM":
-		BAManalyse = AnalysisBAM()
-		BAManalyse.get_file(tmp_path)
-		analyse_result = BAManalyse.count_read(tmp_design_dict)
-	return analyse_result	
+    """
+    print(tmp_design_dict)
+
+    if tmp_filetype == "FASTQ":
+        FQanalyse = AnalysisFQ()
+        FQanalyse.get_file(tmp_path)
+        analyse_result = FQanalyse.count_read(tmp_design_dict)
+    elif tmp_filetype == "BAM":
+        print ("in analysis")
+        BAManalyse = AnalysisBAM()
+        BAManalyse.get_file(tmp_path)
+        analyse_result = BAManalyse.count_read(tmp_design_dict)
+    return analyse_result
 
 
 def global_stat(analyse_result, pvalue, sample, controle, mutation):
@@ -177,7 +189,7 @@ def global_stat(analyse_result, pvalue, sample, controle, mutation):
     :type pvalue: float
     :type sample : string
     :type controle: string
-    :type mutation: string
+    :type mutation: stringr
     :return results: results of the statistic analysis
     :rtype results: dictionary
     """
@@ -251,7 +263,7 @@ def show_arg(args):
     for i in args.iteritems():
         logger.info(i)
 
-if __name__ == '__main__':
+def init():
 
     config = ConfigParser.SafeConfigParser()
     parser = argparse.ArgumentParser()
@@ -297,9 +309,13 @@ if __name__ == '__main__':
     hotcount_stda = StandAlone()
     analysis_type = args["analysis_type"]
     logger.info("analysis begin in %s mode" %analysis_type)
-    if args["analysis_type"]=="ALL":
+    if args["analysis_type"]=="all":
         hotcount_stda.ALL(design_dict,args["path"],args["filetype"], args["pvalue"], mutation, args["sample"], args["controle"], args["output"])
     elif args["analysis_type"]=="count":
         hotcount_stda.count(design_dict, args["path"], args["filetype"], args["output"])
     else :
         hotcount_stda.stat(args["countfile"], args["pvalue"], args["sample"], args["mutation"], args["controle"], args["output"])
+
+
+if __name__ == '__main__':
+    init()
