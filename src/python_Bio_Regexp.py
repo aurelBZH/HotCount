@@ -68,16 +68,21 @@ class regex_seq_finder(object):
  			regex_seq_finder.regex_reverse(self, regex_subseq)
 		if i == '}' :
 			# todoreverse group1
-			if re.match(r".*(\(.*?\))(\{.*?\})$",regex_subseq):
-				group2 = re.match(r".*(\(.*?\))(\{.*?\})$",regex_subseq).group(2)
-				group1 = re.match(r".*(\(.*?\))(\{.*?\})$",regex_subseq).group(1)
-			elif re.match(r".*(\.|[A-Z]{1})(\{.*?\})$",regex_subseq):
-				group2 = re.match(r".*(\.|[A-Z]{1})(\{.*?\})$",regex_subseq).group(2)
-				group1 = re.match(r".*(\.|[A-Z]{1})(\{.*?\})$",regex_subseq).group(1)
-
-			elif re.match(r".*(\[.*\])(\{.*?\})$",regex_subseq):
-				group2 = re.match(r".*(\[.*?\])(\{.*?\})$",regex_subseq).group(2)
-				group1 = re.match(r".*(\[.*?\])(\{.*?\})$",regex_subseq).group(1)
+			regex_group = re.compile(r".*(\(.*?\))(\{.*?\})$")
+			match = regex_group.match(regex_subseq)
+			if match:
+				group2 = match.group(2)
+				group1 = match.group(1)
+			regex_group_letters = re.compile(r".*(\.|[A-Z]{1})(\{.*?\})$")
+			match2 = regex_group_letters.match(regex_subseq)
+			if match2:
+				group2 = match2.group(2)
+				group1 = match2.group(1)
+			regex_group_letters = re.compile(r".*(\[.*\])(\{.*?\})$")
+			match3 = regex_group_letters.match(regex_subseq)
+			if match3:
+				group2 = match3.group(2)
+				group1 = match3.group(1)
 			tmp_regex_grp2 = re.escape(group2)+'$'
 			tmp_regex_grp1 = re.escape(group1)+'$'
 			regex_subseq = re.sub(tmp_regex_grp2,'',regex_subseq)
@@ -215,19 +220,20 @@ class regex_seq_finder(object):
 				pattern += nt 
 		self.find_subseq_result.append(pattern)
 
+		compiled_pattern = re.compile(pattern)
 		if number_of_match == True:
-			self.find_subseq_result.append(len(re.findall(pattern, self.sequence,overlap)))
+			self.find_subseq_result.append(len(compiled_pattern.findall(self.sequence,overlap)))
 			return self.find_subseq_result
 
 		if match == True :
 			match_result = False
-			if len(re.findall(pattern, self.sequence,overlap))>0 :
+			if len(compiled_pattern.findall(self.sequence,overlap))>0 :
 				match_result =True
 			self.find_subseq_result.append(match_result)
 			return self.find_subseq_result 
 
 		if position_of_match == True:
-			matches=re.finditer(pattern, self.sequence)
+			matches = compiled_pattern.finditer(self.sequence)
 			for match in matches :
 				self.find_subseq_result.append(match.start())
 			return self.find_subseq_result
