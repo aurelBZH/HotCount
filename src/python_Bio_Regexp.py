@@ -161,7 +161,6 @@ class regex_seq_finder(object):
 					cpt_brace -= 1
 
 				if cpt_brace != 0 :
-					print(i)
 					if i not in ["0","1","2","3","4","5","6","7","8","9",","]:
 						raise Exception("malformed regular expression")
 				if cpt_bracket != 0: 
@@ -176,6 +175,7 @@ class regex_seq_finder(object):
 
 	def find_subseq(self, sequence, regex, number_of_match, position_of_match, match, nuctype="DNA", overlap=False):
 		"""
+		a function to find a subsequence in a sequence based on a regex. This function
 		:param sequence:the sequence where to search the regular expression
 		:param regex: the regular expression to find
 		:param number_of_match: a param to set the method to return the number of match between regular expression and sequence

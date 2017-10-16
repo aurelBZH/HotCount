@@ -20,29 +20,21 @@ class Analysis(object):
 		self.design_dict = ""
 		self.analyse_results = {}
 		self.file_extentions = []
-		self.file_list=[]
 
 	def get_file(self, path):
 		"""
 		a method to get the file list from the path 
 		:param path: path where the file are stored
 		"""
-		print(path)
-		for extention in self.file_extentions : 
-			print (extention)
+		for extention in self.file_extentions :
 			file_list = glob2.glob(path+extention)
-			print(file_list)
 			if len(file_list) != 0 :
 					break
 		if len(file_list) == 0 :
 			raise Exception("the path is incorrect or the file extension "+
 		 		"is bad,in fact the program can't find the file ")
-		print(file_list)
-		print(type(file_list))
 
 		self.file_list = file_list
-		print (type(self.file_list))
-		print (file_list)
 		return file_list
 		# pysam.AlignmentFile("ex1.bam", "rb")
         
@@ -62,7 +54,7 @@ class AnalysisFQ(Analysis):
 	"""
 	def __init__(self):
 		super(AnalysisFQ, self).__init__()
-		self.file_extentions = ['*.fq.*', '*.fastq','*.fq','*.FASTQ','*.fastq.gz', '.fq.gz', '.FASTQ.gz']
+		self.file_extentions = ['*.fq.*', '*.fastq','*.fq','*.FASTQ','*.fastq.gz', '.fq.gz', '.FASTQ.gz', ".FQ", ".FQ.gz"]
 		self.file_list=[]
 		self.analyse_results ={}
 
@@ -93,14 +85,14 @@ class AnalysisFQ(Analysis):
 				logger.info("treat %s"%file)
 				for name, design in design_dict.iteritems():
 					mutation_number_by_var_val = 0
-					print(design)
 					reverse_design = regex_seq_finder().regex_reverse_complement(design)
 					mut_number = 0
 					for record in records :
-						if regex_seq_finder().find_subseq(str(record.seq),design,False, False, True)[1]:
+						tmp_mut = mut_number
+						if (regex_seq_finder().find_subseq(str(record.seq),design,False, False, True)[1] and mut_number-1!=tmp_mut) or (regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1] and mut_number-1!=tmp_mut):
 							mut_number = mut_number+1
-						elif regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1]:
-							mut_number = mut_number+1
+#						elif regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1] & mut_number-1==tmp_mut:
+#							mut_number = mut_number+1
 					mutation_number_by_var_val= mutation_number_by_var_val + mut_number
 					mutation_number_file_variant[name] = mutation_number_by_var_val
 			self.analyse_results[file] = mutation_number_file_variant
@@ -148,14 +140,17 @@ class AnalysisBAM(Analysis):
 
 					str_read=str(read).split("\t")
 					if str_read[0] not in read_set:
+						#print (str_read[0])
+						print("avant")
 						if regex_seq_finder().find_subseq(str_read[9],design,False, False, True)[1]:
+							print ("apres")
 							mut_number = mut_number+1
 						elif regex_seq_finder().find_subseq(str_read[9],reverse_design,False, False, True)[1]:
 							mut_number = mut_number+1
 					read_set.add(str_read[0])
 				mutation_number_by_var_val = mutation_number_by_var_val + mut_number
 				mutation_number_file_variant[name] = mutation_number_by_var_val
-			self.analyse_results[file] = mutation_number_by_var_val
+			self.analyse_results[file] = mutation_number_file_variant
 		return self. analyse_results
 
 class statistics(object):
@@ -163,7 +158,7 @@ class statistics(object):
 	a class for statistics analysis
 
 	"""
-	def __init__(self, count_table, pvalue, sample, controle, *mutation):
+	def __init__(self, count_table, pvalue, sample, controle, mutation):
 		"""
 		:param count_table: dictionary of count result
 		:param pvalue: the pvalue to use for stat analysis
@@ -193,46 +188,51 @@ class statistics(object):
 		usable for fisher test.
 
 		"""
-		for sample in self.count_table:
-			logger.info(self.mutation)
-			for j in self.mutation:
-				if j not in self.contingency_table:
-					self.contingency_table[j]={}
-				try:
-					if self.count_table[sample][j] > self.count_table[sample][self.controle] :
-						raise ValueError("Nombre de read porteur de l'expression régulière \"controle\" infèrieur" +
-							"au nombre de read muté. Rechercher une erreur dans l'expression régulière.")
-					self.contingency_table[j][sample] = [self.count_table[sample][j],self.count_table[sample][self.controle]]
-	#si controle =all (soustraire)
+		for mut in self.mutation:
+			mut_lower = mut.lower()
+			if mut_lower not in self.contingency_table:
+				self.contingency_table[mut_lower] = {}
+			for sample in self.count_table:
+				logger.info(self.mutation)
 
-				except ValueError:
-					raise ValueError("problem in value error ")
-					# print(self.contingency_table)
+				if int(self.count_table[sample][mut_lower]) > int(self.count_table[sample][self.controle]) :
+					if self.controle == "all" & int(self.count_table[sample][self.controle])>= sum(self.count_table[sample]):
+						raise ValueError("all is less than the sum of all the variant")
+					raise ValueError("Nombre de read porteur de l'expression régulière \"controle\" "+self.controle+ " infèrieur" +" ("+self.count_table[sample][self.controle]+")"+
+						"au nombre de read muté"+" "+mut_lower+" ("+self.count_table[sample][mut_lower]+") "+". Rechercher une erreur dans l'expression régulière.")
+
+				self.contingency_table[mut_lower][sample] = [self.count_table[sample][mut_lower],self.count_table[sample][self.controle]]
+	#si controle =all (soustraire
 		return self.contingency_table
 			
 	def apply_fisher_test(self):
 		"""
-		a method to apply fisher test on. It's a statistic test to check if a test
+		a method to apply fisher test on. It's a statistic test to check if a value is superior to the noise.
+		each sample count is compared with all others sample count.
+
 		"""
 		fisher_hash_result={}
 		# ipdb.set_trace()
+
 		for mutation, contingency_table in self.contingency_table.iteritems():
 			if mutation not in fisher_hash_result:
 				fisher_hash_result[mutation]={}
+				logger.debug(mutation)
 			for sample1, count_value1  in contingency_table.iteritems():
 				fisher_hash_result[mutation][sample1] = {}
 				for sample2, count_value2 in contingency_table.iteritems():
 					if sample1 != sample2:
-						logger.debug(count_value1)
-						logger.debug(count_value2)
 						fisher_result = stats.fisher_exact([count_value1, count_value2],"greater")
 						fisher_hash_result[mutation][sample1][sample2] = fisher_result[1]
 		self.fisher_matrix = fisher_hash_result
+		logger.info(self.fisher_matrix)
 		return self.fisher_matrix
 
 	def check_positiv_sample(self):
 		"""
-		a method to check sample positivity
+		a method to check sample positivity, check for each couple of
+		sample if the pvalue is inferior to the chosen pvalue
+
 		"""
 		positivity = False
 		sample_pvalue_dict = {}

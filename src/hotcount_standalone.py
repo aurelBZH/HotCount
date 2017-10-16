@@ -40,19 +40,17 @@ class StandAlone(object):
                 op_file = open(output_file, "w")
             except Exception as e:
                 raise Exception("there is a problem with the file opening")
-            self.analyse_result = analysis(filetype, path, design_dict)
-            op_file.write(to_csv(self.analyse_result, output_file))
-            print ("inpu"+str(output_file))
+            to_csv(self.analyse_result, output_file)
         else:
             self.analyse_result = analysis(filetype, path, design_dict)
-            csv_analysis = to_csv(self.analyse_result, output_file)
-            logger.info(csv_analysis)
+#            csv_analysis = to_csv(self.analyse_result, output_file)
+            logger.info(self.analyse_result)
 
-            print ("out"+str(output_file))
 
     def ALL(self,design_dict, path, filetype, pvalue, mutation, sample, controle, output_file="default"):
         """
         a function to make count and statistic treatment
+        and display the result .
         :param design_dict: file containing the design of the  diferent regex to count
         :param path: path to the directory where the file are stored
         :param filetype : number of positiv sample chosen by the user
@@ -76,8 +74,8 @@ class StandAlone(object):
             except Exception as e:
                 raise Exception("there is a problem with the file opening")
             self.analyse_result = analysis(filetype, path, design_dict)
-            op_file.write(to_csv(self.analyse_result, output_file))
-            self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, mutation.split(","))
+            to_csv(self.analyse_result, output_file)
+            self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, mutation)
             for k in xrange(0,int(sample)):
                 for i,j in self.stat_result.iteritems():
                     if j==k:
@@ -87,7 +85,7 @@ class StandAlone(object):
         else:
             self.analyse_result = analysis(filetype, path, design_dict)
 
-            self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, mutation.split(","))
+            self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, mutation)
             for k in xrange(0,int(sample)):
                 for i,j in self.stat_result.iteritems():
                     if j==k:
@@ -96,6 +94,7 @@ class StandAlone(object):
     def stat(self, countfile, pvalue, sample, mutation, controle, output_file="default"):
         """
         a function to make count and statistic treatment
+        and display the result
         :param countfile: file containing the result of the  diferent count
         :param pvalue: pvalue to choose for analysis
         :param sample : number of positiv sample chosen by the user
@@ -118,13 +117,14 @@ class StandAlone(object):
                 op_file = open(output_file, "w")
             except Exception as e:
                 raise Exception("there is a problem with the file opening")
-            self.stat_result =global_stat(countvalue, pvalue, sample, controle, mutation.split(","))
+            self.stat_result =global_stat(countvalue, pvalue, sample, controle, mutation)
             x=0
             logger.debug(sample)
             for mut,result in self.stat_result.items():
                 op_file.write("results for the "+str(mut)+" mutation vs all")
                 logger.info("results for the "+str(mut)+" mutation vs all")
-                for i in range(0, int(sample)):
+                positif_number=int(len(result[1][1])) if int(len(result[1][1]))<=int(sample) else int(sample)
+                for i in range(0, int(len(result[1][1]))):
                     op_file.write("Who is significant with only  " + str(
 
                         i+1) + " positive  sample  in this library (p<=" + str(pvalue) + ")")
@@ -152,7 +152,8 @@ class StandAlone(object):
 
 def analysis(tmp_filetype, tmp_path, tmp_design_dict):
     """
-    a function regrouping the count analysis
+    a function regrouping the count analysis based on python bio regex
+
     :param tmp_filetype: input file type
     :param tmp_path: path of input files
     :param tmp_design_dict: design_dict containing design
@@ -163,14 +164,12 @@ def analysis(tmp_filetype, tmp_path, tmp_design_dict):
     :rtype analyse_result: dictionary
 
     """
-    print(tmp_design_dict)
 
     if tmp_filetype == "FASTQ":
         FQanalyse = AnalysisFQ()
         FQanalyse.get_file(tmp_path)
         analyse_result = FQanalyse.count_read(tmp_design_dict)
     elif tmp_filetype == "BAM":
-        print ("in analysis")
         BAManalyse = AnalysisBAM()
         BAManalyse.get_file(tmp_path)
         analyse_result = BAManalyse.count_read(tmp_design_dict)
@@ -193,7 +192,7 @@ def global_stat(analyse_result, pvalue, sample, controle, mutation):
     :return results: results of the statistic analysis
     :rtype results: dictionary
     """
-    statistic = statistics(analyse_result, pvalue, sample, controle, *mutation)
+    statistic = statistics(analyse_result, pvalue, sample, controle, mutation)
     statistic.create_contingency_table()
     fisher = statistic.apply_fisher_test()
     results = statistic.check_positiv_sample()
@@ -202,22 +201,23 @@ def global_stat(analyse_result, pvalue, sample, controle, mutation):
 
 def to_csv(dicti, output_file ="default"):
     """
-    a simple function to write result in csv format
+    a simple function to write results in csv format
+
     :param dicti: a dictionary of statistics result
     :param output_file: the output file to write the stat result
     :type dicti: dictionary
     :type output_file: string
     """
     cpt=0
-    if output_file == "default":
-        output_file = "result.txt"
+    #if output_file == "default" or output_file == None:
+     #   output_file = "result.txt"
     with open(output_file, 'wb') as f:
         for i,j in dicti.iteritems():
-            logger.info(i,j)
-            j["sample"]=i
             w = csv.DictWriter(f,j)
             if cpt == 0 :
+                f.write("sample,")
                 w.writeheader()
+            f.write(i+', ')
             w.writerow(j)
             cpt+=1
     return output_file
@@ -264,6 +264,11 @@ def show_arg(args):
         logger.info(i)
 
 def init():
+    """
+    function for initialisation and parsing of
+    parrameters
+
+    """
 
     config = ConfigParser.SafeConfigParser()
     parser = argparse.ArgumentParser()
@@ -276,7 +281,7 @@ def init():
     all_parser.add_argument("-o","--output", help="result file")
     all_parser.add_argument("-p","--pvalue", default=0.001, help="pvalue", type=int)
     all_parser.add_argument("-s", "--sample", default=6, help="max number of positive samples")
-    all_parser.add_argument("-m", "--mutation", required= True,  help=" mutation to be analysed in a string, separated by a ',' " )
+    all_parser.add_argument("-m", "--mutation", required= True, nargs='*', help=" mutation to be analysed in a string, separated by a ',' " )
     all_parser.add_argument("-a","--controle",default="all", help="controle regex")
 
     count_parser = sub.add_parser("count")
@@ -289,7 +294,7 @@ def init():
     stat_parser.add_argument("-c","--countfile", required=True, help="file with count result in csv")
     stat_parser.add_argument("-p","--pvalue", default=0.001, help="pvalue", type=int)
     stat_parser.add_argument("-s", "--sample", default=6, help="max number of positive samples")
-    stat_parser.add_argument("-m", "--mutation", required= True,  help=" mutation to be analysed in a string, separated by a ',' " )
+    stat_parser.add_argument("-m", "--mutation", required= True,nargs='+', help=" mutation to be analysed in a string, separated by a ',' " )
     stat_parser.add_argument("-o","--output", help="result file")
     stat_parser.add_argument("-a","--controle", default="all", help="controle regex")
 
@@ -300,17 +305,12 @@ def init():
         show_mutation(config)
         design_dict=dict(config.items('mutation_design'))
 
-    if "mutation" in args:
-        mutation =args["mutation"]
-    else:
-        mutation ="default"
-
     show_arg(args)
     hotcount_stda = StandAlone()
     analysis_type = args["analysis_type"]
     logger.info("analysis begin in %s mode" %analysis_type)
     if args["analysis_type"]=="all":
-        hotcount_stda.ALL(design_dict,args["path"],args["filetype"], args["pvalue"], mutation, args["sample"], args["controle"], args["output"])
+        hotcount_stda.ALL(design_dict,args["path"],args["filetype"], args["pvalue"], args["mutation"], args["sample"], args["controle"], args["output"])
     elif args["analysis_type"]=="count":
         hotcount_stda.count(design_dict, args["path"], args["filetype"], args["output"])
     else :
