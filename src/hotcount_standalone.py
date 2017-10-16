@@ -5,8 +5,6 @@ from __future__ import print_function
 import ConfigParser
 import argparse
 import csv
-from logsystem import *
-import re
 from hotcount import *
 
 version = 1.0

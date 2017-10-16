@@ -4,7 +4,6 @@ from __future__ import print_function
 import re
 from Bio.Data import IUPACData
 import ipdb
-import scipy 
 
 
 class regex_seq_finder(object):

@@ -7,8 +7,6 @@ import pysam
 import scipy.stats as stats
 from python_Bio_Regexp import *
 from logsystem import *
-import collections
-import pandas
 
 class Analysis(object):
 	"""
