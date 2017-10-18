@@ -1,4 +1,4 @@
-#/usr/bin/python
+#/usr/bin/env python 2.7
 # coding: utf-8 
 from __future__ import print_function
 from Bio import SeqIO
@@ -80,7 +80,6 @@ class AnalysisFQ(Analysis):
 			mutation_number_file_variant = {}
 			with open(file, "rU") as handle:
 				records = list(SeqIO.parse(handle, "fastq"))
-				logger.info("treat %s"%file)
 				for name, design in design_dict.iteritems():
 					mutation_number_by_var_val = 0
 					reverse_design = regex_seq_finder().regex_reverse_complement(design)
@@ -138,10 +137,7 @@ class AnalysisBAM(Analysis):
 
 					str_read=str(read).split("\t")
 					if str_read[0] not in read_set:
-						#print (str_read[0])
-						print("avant")
 						if regex_seq_finder().find_subseq(str_read[9],design,False, False, True)[1]:
-							print ("apres")
 							mut_number = mut_number+1
 						elif regex_seq_finder().find_subseq(str_read[9],reverse_design,False, False, True)[1]:
 							mut_number = mut_number+1
@@ -191,7 +187,7 @@ class statistics(object):
 			if mut_lower not in self.contingency_table:
 				self.contingency_table[mut_lower] = {}
 			for sample in self.count_table:
-				logger.info(self.mutation)
+				logger.info(" %s"%mut)
 
 				if int(self.count_table[sample][mut_lower]) > int(self.count_table[sample][self.controle]) :
 					if self.controle == "all" & int(self.count_table[sample][self.controle])>= sum(self.count_table[sample]):

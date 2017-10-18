@@ -1,9 +1,8 @@
-#/usr/bin/python
+#/usr/bin/env python2.7
 # coding: utf-8 
 from __future__ import print_function
 import re
 from Bio.Data import IUPACData
-import ipdb
 
 
 class regex_seq_finder(object):
@@ -33,7 +32,7 @@ class regex_seq_finder(object):
 		self.regex_subseq = regex_subseq
 		pattern = ""
 		for nt in self.regex_subseq:
-			if re.match(r"[A-Z]", nt) :	
+			if nt.isalpha() :
 				if nuctype == "DNA": 
 					complement_value = IUPACData.ambiguous_dna_complement[nt]
 					value = IUPACData.ambiguous_dna_values[complement_value]
@@ -45,7 +44,7 @@ class regex_seq_finder(object):
 					pattern += value
 				else: 
 					pattern += '[%s]' %value 
-			elif re.match(r"[^A-Z]", nt):
+			elif nt.isalpha()!=True:
 				pattern += nt
 		self.complement=pattern	
 		return self.complement
@@ -61,7 +60,7 @@ class regex_seq_finder(object):
 			return self.reverse_str
 		
 		i=regex_subseq[-1]
-		if re.match(r"[A-Z]",i) or i in [".", "|", "$", "^"]:
+		if i.isalpha() or i in [".", "|", "$", "^"]:
 	 		self.reverse_str += i
 	 		regex_subseq =regex_subseq[:-1]
  			regex_seq_finder.regex_reverse(self, regex_subseq)
@@ -99,9 +98,11 @@ class regex_seq_finder(object):
 			regex_subseq = regex_subseq[:-1]
 	 	 	regex_seq_finder.regex_reverse(self, regex_subseq)
 
-		if i == ']' :	
-			if re.match(r".*(\[.*?\])$", regex_subseq):
-				group = re.match(r".*(\[.*?\])",regex_subseq).group(1)
+		if i == ']' :
+			regex_group_bracket = re.compile(r".*(\[.*?\])$")
+			match_bracket = regex_group_bracket.match(regex_subseq)
+			if match_bracket:
+				group = match_bracket.group(1)
 				self.reverse_str += group
 				tmp_regex_grp = re.escape(group)+'$'
 				regex_subseq = re.sub(tmp_regex_grp,'',regex_subseq)
@@ -109,17 +110,21 @@ class regex_seq_finder(object):
 
 	
 		if i == '*' :
-			if re.match(r".*(\(.*?\))(\*|\+)$",regex_subseq):
-				group2 = re.match(r".*(\(.*?\))(\*|\+)$",regex_subseq).group(2)
-				group1 = re.match(r".*(\(.*?\))(\*|\+)$",regex_subseq).group(1)
-
-			elif re.match(r".*(\.|[A-Z]{1})(\*)$",regex_subseq):
-				group2 = re.match(r".*(\.|[A-Z]{1})(\*|\+)$",regex_subseq).group(2)
-				group1 = re.match(r".*(\.|[A-Z]{1})(\*|\+)$",regex_subseq).group(1)
-
-			elif re.match(r".*(\[.*?\])(\*)$",regex_subseq):
-				group2 = re.match(r".*(\[.*?\])(\*|\+)$",regex_subseq).group(2)
-				group1 = re.match(r".*(\[.*\])(\*|\+)$",regex_subseq).group(1)	
+			regex_group_star = re.compile(r".*(\(.*?\))(\*|\+)$")
+			match_star1 = regex_group_star.match(regex_subseq)
+			if match_star1:
+				group2 = match_star1.group(2)
+				group1 = match_star1.group(1)
+			regex_group_star2 = re.compile(r".*(\.|[A-Z]{1})(\*)$")
+			match_star2 = regex_group_star2.match(regex_subseq)
+			if match_star2:
+				group2 = match_star2.group(2)
+				group1 = match_star2.group(1)
+			regex_group_star3 = re.compile(r".*(\[.*?\])(\*)$")
+			match_star3 = regex_group_star3.match(regex_subseq)
+			if match_star3:
+				group2 = match_star3.group(2)
+				group1 = match_star3.group(1)
 
 			tmp_regex_grp2 = re.escape(group2)+'$'
 			tmp_regex_grp1 = re.escape(group1)+'$'
@@ -202,12 +207,12 @@ class regex_seq_finder(object):
 		for nt in self.regex_subseq:
 		
 			# ipdb.set_trace()
-			if re.match(r"[A-Z]", nt) :
+			if nt.isalpha() :
 				if nuctype == "DNA": 
 					value = IUPACData.ambiguous_dna_values[nt] 
 					if len(value) == 1: 
 						pattern += value
-					else: 
+					else:
 						pattern += '[%s]' %value 
 				if nuctype == 'RNA':
 					value = IUPACData.ambiguous_rna_values[nt]
@@ -215,7 +220,7 @@ class regex_seq_finder(object):
 						pattern += value 
 					else: 
 						pattern += '[%s]' % value
-			elif re.match(r"[^A-Z]", nt):
+			elif nt.isalpha()!=True:
 				pattern += nt 
 		self.find_subseq_result.append(pattern)
 

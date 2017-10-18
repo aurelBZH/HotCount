@@ -246,16 +246,15 @@ def to_dict(file):
 
 
 def show_mutation(config):
-	"""
-	log function to show the mutation the software is working on 
-	:param config: an object config parser containing the diferent mutation
-	:type config: configparser object 
-	"""
-	design_dict = dict(config.items('mutation_design'))
-	logger.info("show mutation")
-	for name, design in design_dict.iteritems():
-
-		logger.info("%(name_v)s,%(design_v)s"%{"name_v":name,"design_v":design})
+    """
+    log function to show the mutation the software is working on
+    :param config: an object config parser containing the diferent mutation
+    :type config: configparser object
+    """
+    design_dict = dict(config.items('mutation_design'))
+    logger.info("show mutation")
+    for name, design in design_dict.iteritems():
+        logger.info("%(name_v)s,%(design_v)s"%{"name_v":name,"design_v":design})
 
 def show_arg(args):
     for i in args.iteritems():
