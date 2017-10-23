@@ -6,6 +6,7 @@ import ConfigParser
 import argparse
 import csv
 from hotcount import *
+import gzip
 
 version = 1.0
 
@@ -45,7 +46,7 @@ class StandAlone(object):
             logger.info(self.analyse_result)
 
 
-    def ALL(self,design_dict, path, filetype, pvalue, mutation, sample, controle, output_file="default"):
+    def ALL(self,design_dict, path, filetype, pvalue, mutation, sample, controle,depth,output_file="default" ):
         """
         a function to make count and statistic treatment
         and display the result .
@@ -73,7 +74,7 @@ class StandAlone(object):
                 raise Exception("there is a problem with the file opening")
             self.analyse_result = analysis(filetype, path, design_dict)
             to_csv(self.analyse_result, output_file)
-            self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, mutation)
+            self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, depth, mutation)
             for k in xrange(0,int(sample)):
                 for i,j in self.stat_result.iteritems():
                     if j==k:
@@ -83,13 +84,13 @@ class StandAlone(object):
         else:
             self.analyse_result = analysis(filetype, path, design_dict)
 
-            self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, mutation)
+            self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, depth, mutation)
             for k in xrange(0,int(sample)):
                 for i,j in self.stat_result.iteritems():
                     if j==k:
                         logger.info (i,j)
 
-    def stat(self, countfile, pvalue, sample, mutation, controle, output_file="default"):
+    def stat(self, countfile, pvalue, sample, mutation, controle,depth, output_file="default"):
         """
         a function to make count and statistic treatment
         and display the result
@@ -115,7 +116,7 @@ class StandAlone(object):
                 op_file = open(output_file, "w")
             except Exception as e:
                 raise Exception("there is a problem with the file opening")
-            self.stat_result =global_stat(countvalue, pvalue, sample, controle, mutation)
+            self.stat_result =global_stat(countvalue, pvalue, sample, controle, depth, mutation)
             x=0
             logger.debug(sample)
             for mut,result in self.stat_result.items():
@@ -124,7 +125,6 @@ class StandAlone(object):
                 positif_number=int(len(result[1][1])) if int(len(result[1][1]))<=int(sample) else int(sample)
                 for i in range(0, int(len(result[1][1]))):
                     op_file.write("Who is significant with only  " + str(
-
                         i+1) + " positive  sample  in this library (p<=" + str(pvalue) + ")")
                     logger.info("Who is significant with only " + str(
                         i+1) + " positive  sample  in this library (p<=" + str(pvalue) + ")")
@@ -174,7 +174,7 @@ def analysis(tmp_filetype, tmp_path, tmp_design_dict):
     return analyse_result
 
 
-def global_stat(analyse_result, pvalue, sample, controle, mutation):
+def global_stat(analyse_result, pvalue, sample, controle,depth, mutation):
     """
     a function to regroupe statistic treatment
     :param analyse_result: result of the mutation count
@@ -190,7 +190,7 @@ def global_stat(analyse_result, pvalue, sample, controle, mutation):
     :return results: results of the statistic analysis
     :rtype results: dictionary
     """
-    statistic = statistics(analyse_result, pvalue, sample, controle, mutation)
+    statistic = statistics(analyse_result, pvalue, sample, controle, depth, mutation)
     statistic.create_contingency_table()
     fisher = statistic.apply_fisher_test()
     results = statistic.check_positiv_sample()
@@ -238,7 +238,7 @@ def to_dict(file):
                 result_dict[val] = {}
                 for key,value in row.iteritems():
                     if key != "sample":
-                        result_dict[val][key]=value
+                        result_dict[val][key]=int(value)
         except Exception as e:
             raise e("there is a problem with input file ")
 
@@ -280,7 +280,7 @@ def init():
     all_parser.add_argument("-s", "--sample", default=6, help="max number of positive samples")
     all_parser.add_argument("-m", "--mutation", required= True, nargs='*', help=" mutation to be analysed in a string, separated by a ',' " )
     all_parser.add_argument("-a","--controle",default="all", help="controle regex")
-
+    all_parser.add_argument("-n", "--depth", default=100, help="controle regex",type=int)
     count_parser = sub.add_parser("count")
     count_parser.add_argument('--designfile',required=True,help='path to the design file, the design file is the file containing the variant')
     count_parser.add_argument('--path',required=True, help='where the sample file are stored')
@@ -294,6 +294,7 @@ def init():
     stat_parser.add_argument("-m", "--mutation", required= True,nargs='+', help=" mutation to be analysed in a string, separated by a ',' " )
     stat_parser.add_argument("-o","--output", help="result file")
     stat_parser.add_argument("-a","--controle", default="all", help="controle regex")
+    stat_parser.add_argument("-n", "--depth", default=100, help="controle regex",type=int)
 
     args = vars(parser.parse_args())
 
@@ -307,11 +308,11 @@ def init():
     analysis_type = args["analysis_type"]
     logger.info("analysis begin in %s mode" %analysis_type)
     if args["analysis_type"]=="all":
-        hotcount_stda.ALL(design_dict,args["path"],args["filetype"], args["pvalue"], args["mutation"], args["sample"], args["controle"], args["output"])
+        hotcount_stda.ALL(design_dict,args["path"],args["filetype"], args["pvalue"], args["mutation"], args["sample"], args["controle"],args["depth"], args["output"])
     elif args["analysis_type"]=="count":
         hotcount_stda.count(design_dict, args["path"], args["filetype"], args["output"])
     else :
-        hotcount_stda.stat(args["countfile"], args["pvalue"], args["sample"], args["mutation"], args["controle"], args["output"])
+        hotcount_stda.stat(args["countfile"], args["pvalue"], args["sample"], args["mutation"], args["controle"], args["depth"], args["output"])
 
 
 if __name__ == '__main__':

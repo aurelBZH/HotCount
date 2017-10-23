@@ -7,6 +7,7 @@ import pysam
 import scipy.stats as stats
 from python_Bio_Regexp import *
 from logsystem import *
+import gzip
 
 class Analysis(object):
 	"""
@@ -73,26 +74,28 @@ class AnalysisFQ(Analysis):
 		"""
 		for file in self.file_list:
 			logger.info("treat %s"%file)
-
-			if file.endswith(".gz") :
-				pass
 			self.analyse_results[file] = {}
 			mutation_number_file_variant = {}
-			with open(file, "rU") as handle:
-				records = list(SeqIO.parse(handle, "fastq"))
-				for name, design in design_dict.iteritems():
-					mutation_number_by_var_val = 0
-					reverse_design = regex_seq_finder().regex_reverse_complement(design)
-					mut_number = 0
-					for record in records :
-						tmp_mut = mut_number
-						if (regex_seq_finder().find_subseq(str(record.seq),design,False, False, True)[1] and mut_number-1!=tmp_mut) or (regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1] and mut_number-1!=tmp_mut):
-							mut_number = mut_number+1
-#						elif regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1] & mut_number-1==tmp_mut:
-#							mut_number = mut_number+1
-					mutation_number_by_var_val= mutation_number_by_var_val + mut_number
-					mutation_number_file_variant[name] = mutation_number_by_var_val
-			self.analyse_results[file] = mutation_number_file_variant
+			if file.endswith(".gz") :
+				fileContent =gzip.open(file, "rt")
+
+			elif file.endswith(".gz")!=True :
+				fileContent = open(file, "rb")
+			records = list(SeqIO.parse(fileContent, "fastq"))
+			for name, design in design_dict.iteritems():
+				mutation_number_by_var_val = 0
+				reverse_design = regex_seq_finder().regex_reverse_complement(design)
+				mut_number = 0
+				for record in records :
+					tmp_mut = mut_number
+					if (regex_seq_finder().find_subseq(str(record.seq),design,False, False, True)[1] and mut_number-1!=tmp_mut) or (regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1] and mut_number-1!=tmp_mut):
+						mut_number = mut_number+1
+	#						elif regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1] & mut_number-1==tmp_mut:
+	#							mut_number = mut_number+1
+				mutation_number_by_var_val= mutation_number_by_var_val + mut_number
+				mutation_number_file_variant[name] = mutation_number_by_var_val
+
+		self.analyse_results[file] = mutation_number_file_variant
 		return self. analyse_results
 
 class AnalysisBAM(Analysis):
@@ -152,7 +155,7 @@ class statistics(object):
 	a class for statistics analysis
 
 	"""
-	def __init__(self, count_table, pvalue, sample, controle, mutation):
+	def __init__(self, count_table, pvalue, sample, controle, depth, mutation):
 		"""
 		:param count_table: dictionary of count result
 		:param pvalue: the pvalue to use for stat analysis
@@ -173,6 +176,7 @@ class statistics(object):
 		self.pvalue =pvalue
 		self.sample = sample
 		self.controle = controle
+		self.depth = depth
 		logger.info("begin stat")
 
 
@@ -188,13 +192,13 @@ class statistics(object):
 				self.contingency_table[mut_lower] = {}
 			for sample in self.count_table:
 				logger.info(" %s"%mut)
-
-				if int(self.count_table[sample][mut_lower]) > int(self.count_table[sample][self.controle]) :
-					if self.controle == "all" & int(self.count_table[sample][self.controle])>= sum(self.count_table[sample]):
+				if (self.controle == "all") and (int(self.count_table[sample][self.controle])>= int(sum(self.count_table[sample].values()))):
 						raise ValueError("all is less than the sum of all the variant")
+				if int(self.count_table[sample][mut_lower]) > int(self.count_table[sample][self.controle]):
 					raise ValueError("Nombre de read porteur de l'expression régulière \"controle\" "+self.controle+ " infèrieur" +" ("+self.count_table[sample][self.controle]+")"+
 						"au nombre de read muté"+" "+mut_lower+" ("+self.count_table[sample][mut_lower]+") "+". Rechercher une erreur dans l'expression régulière.")
-
+				if int(self.count_table[sample]["all"])<self.depth:
+					raise ValueError("the sequencing depth at the mutation position is insufficient. ")
 				self.contingency_table[mut_lower][sample] = [self.count_table[sample][mut_lower],self.count_table[sample][self.controle]]
 	#si controle =all (soustraire
 		return self.contingency_table
