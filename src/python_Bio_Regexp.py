@@ -3,6 +3,7 @@
 from __future__ import print_function
 import re
 from Bio.Data import IUPACData
+import ipdb
 
 
 class regex_seq_finder(object):
@@ -181,18 +182,19 @@ class regex_seq_finder(object):
 					raise Exception("anormal number of bracket brace or parenthesis")
 
 
-
-	def find_subseq(self, sequence, regex, number_of_match, position_of_match, match, nuctype="DNA", overlap=False):
+	def find_subseq(self, sequence, regex, IUPAC, number_of_match, position_of_match, match, nuctype="DNA", overlap=False):
 		"""
 		a function to find a subsequence in a sequence based on a regex. This function
 		:param sequence:the sequence where to search the regular expression
 		:param regex: the regular expression to find
+		:param IUPAC : usage of iupac code
 		:param number_of_match: a param to set the method to return the number of match between regular expression and sequence
 		:param position _of_match: a param to set the method for returning the matching position
 		:param match: a param to set the method for returning if there is a match or not
 		:param overlap: a param for choosing if it can have an overlap between 2 match
 		:type sequence: string
 		:type regex: string
+		:type IUPAC : boolean
 		:type number_of_match: boolean
 		:type position_of_match: boolean
 		:type match: boolean
@@ -203,27 +205,32 @@ class regex_seq_finder(object):
 		self.nuctype = nuctype
 		self.regex_subseq = regex	
 		pattern = ""
-		cpt=0 
-		for nt in self.regex_subseq:
-		
-			# ipdb.set_trace()
-			if nt.isalpha() :
-				if nuctype == "DNA": 
-					value = IUPACData.ambiguous_dna_values[nt] 
-					if len(value) == 1: 
-						pattern += value
-					else:
-						pattern += '[%s]' %value 
-				if nuctype == 'RNA':
-					value = IUPACData.ambiguous_rna_values[nt]
-					if len(value) == 1: 
-						pattern += value 
-					else: 
-						pattern += '[%s]' % value
-			elif nt.isalpha()!=True:
-				pattern += nt 
-		self.find_subseq_result.append(pattern)
+		cpt=0
+		if IUPAC:
+			for nt in self.regex_subseq:
 
+				# ipdb.set_trace()
+				if nt.isalpha() :
+					if nuctype == "DNA":
+						value = IUPACData.ambiguous_dna_values[nt]
+						if len(value) == 1:
+							pattern += value
+						else:
+							pattern += '[%s]' %value
+					if nuctype == 'RNA':
+						value = IUPACData.ambiguous_rna_values[nt]
+						if len(value) == 1:
+							pattern += value
+						else:
+							pattern += '[%s]' % value
+				elif nt.isalpha()!=True:
+					pattern += nt
+
+		else:
+
+			pattern=self.regex_subseq
+		#ipdb.set_trace()
+		self.find_subseq_result.append(pattern)
 		compiled_pattern = re.compile(pattern)
 		if number_of_match == True:
 			self.find_subseq_result.append(len(compiled_pattern.findall(self.sequence,overlap)))
@@ -231,10 +238,11 @@ class regex_seq_finder(object):
 
 		if match == True :
 			match_result = False
-			if len(compiled_pattern.findall(self.sequence,overlap))>0 :
+			#ipdb.set_trace()
+			if compiled_pattern.search(self.sequence) :
 				match_result =True
 			self.find_subseq_result.append(match_result)
-			return self.find_subseq_result 
+			return self.find_subseq_result
 
 		if position_of_match == True:
 			matches = compiled_pattern.finditer(self.sequence)
