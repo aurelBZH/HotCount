@@ -2,6 +2,7 @@
 # coding: utf-8 
 import pytest
 from src import python_Bio_Regexp
+import re
 # from datadiff.tools import assert_equal 
 # from datadiff import diff
 from src import hotcount

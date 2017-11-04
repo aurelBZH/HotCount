@@ -21,7 +21,7 @@ class StandAlone(object):
 
 	
 
-    def count(self, design_dict, path, filetype, IUPAC, output_file="default"):
+    def count(self, design_dict, path, filetype, IUPAC, nuctype,output_file="default"):
         """
         a function making the count treatment only
         :param design_dict: file containing the design of the  diferent regex to count
@@ -34,19 +34,19 @@ class StandAlone(object):
         :type output_file: string
         """
         if output_file!=None:
-            self.analyse_result = analysis(filetype, path, design_dict, IUPAC)
+            self.analyse_result = analysis(filetype, path, design_dict,nuctype, IUPAC)
             try:
                 op_file = open(output_file, "w")
             except Exception as e:
                 raise Exception("there is a problem with the file opening")
             to_csv(self.analyse_result, output_file)
         else:
-            self.analyse_result = analysis(filetype, path, design_dict, IUPAC)
+            self.analyse_result = analysis(filetype, path, design_dict,nuctype, IUPAC)
 #            csv_analysis = to_csv(self.analyse_result, output_file)
             logger.info(self.analyse_result)
 
 
-    def ALL(self,design_dict, path, filetype, pvalue, mutation, sample, controle, depth, IUPAC, output_file="default" ):
+    def ALL(self,design_dict, path, filetype, pvalue, mutation, sample, controle, depth, IUPAC,nuctype, output_file="default" ):
         """
         a function to make count and statistic treatment
         and display the result .
@@ -72,7 +72,7 @@ class StandAlone(object):
                 op_file = open(output_file, "w")
             except Exception as e:
                 raise Exception("there is a problem with the file opening")
-            self.analyse_result = analysis(filetype, path, design_dict, IUPAC)
+            self.analyse_result = analysis(filetype, path, design_dict, nuctype, IUPAC)
             to_csv(self.analyse_result, output_file)
             self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, depth, mutation)
             for k in xrange(0,int(sample)):
@@ -82,7 +82,7 @@ class StandAlone(object):
                         op_file.write(str(i)+','+str(j))
             op_file.close()
         else:
-            self.analyse_result = analysis(filetype, path, design_dict, IUPAC)
+            self.analyse_result = analysis(filetype, path, design_dict,nuctype, IUPAC)
 
             self.stat_result = global_stat(self.analyse_result, pvalue, sample, controle, depth, mutation)
             for k in xrange(0,int(sample)):
@@ -148,7 +148,7 @@ class StandAlone(object):
 
 
 
-def analysis(tmp_filetype, tmp_path,tmp_design_dict, IUPAC):
+def analysis(tmp_filetype, tmp_path,tmp_design_dict,nuctype, IUPAC):
     """
     a function regrouping the count analysis based on python bio regex
 
@@ -165,11 +165,11 @@ def analysis(tmp_filetype, tmp_path,tmp_design_dict, IUPAC):
     if tmp_filetype == "FASTQ":
         FQanalyse = AnalysisFQ()
         FQanalyse.get_file(tmp_path)
-        analyse_result = FQanalyse.count_read(tmp_design_dict, IUPAC)
+        analyse_result = FQanalyse.count_read(tmp_design_dict,nuctype, IUPAC)
     elif tmp_filetype == "BAM":
         BAManalyse = AnalysisBAM()
         BAManalyse.get_file(tmp_path)
-        analyse_result = BAManalyse.count_read(tmp_design_dict, IUPAC)
+        analyse_result = BAManalyse.count_read(tmp_design_dict,nuctype, IUPAC)
     return analyse_result
 
 
@@ -279,14 +279,18 @@ def init():
     all_parser.add_argument("-s", "--sample", default=6, help="max number of positive samples")
     all_parser.add_argument("-m", "--mutation", required= True, nargs='*', help=" mutation to be analysed in a string, separated by a ',' " )
     all_parser.add_argument("-a","--controle",default="all", help="controle regex")
-    all_parser.add_argument("-n", "--depth", default=100, help="controle regex",type=int)
+    all_parser.add_argument("-d", "--depth", default=100, help="controle regex",type=int)
     all_parser.add_argument("-I", "--IUPAC", help="use IUPAC data",action='store_true')
+    all_parser.add_argument("-n","--nuctype",default="DNA", help="type of nucleotide")
+
     count_parser = sub.add_parser("count")
     count_parser.add_argument('--designfile',required=True,help='path to the design file, the design file is the file containing the variant')
     count_parser.add_argument('--path',required=True, help='where the sample file are stored')
     count_parser.add_argument('-f','--filetype', default='FASTQ', help='file type to process')
     count_parser.add_argument("-o","--output", help="result file")
     count_parser.add_argument("-I", "--IUPAC", help="use IUPAC data",action='store_true')
+    count_parser.add_argument("-n","--nuctype",default="DNA", help="type of nucleotide")
+
 
     stat_parser = sub.add_parser("stat")
     stat_parser.add_argument("-c","--countfile", required=True, help="file with count result in csv")
@@ -295,7 +299,7 @@ def init():
     stat_parser.add_argument("-m", "--mutation", required= True,nargs='+', help=" mutation to be analysed in a string, separated by a ',' " )
     stat_parser.add_argument("-o","--output", help="result file")
     stat_parser.add_argument("-a","--controle", default="all", help="controle regex")
-    stat_parser.add_argument("-n", "--depth", default=100, help="controle regex",type=int)
+    stat_parser.add_argument("-d", "--depth", default=100, help="controle regex",type=int)
 
 
     args = vars(parser.parse_args())
@@ -310,9 +314,9 @@ def init():
     analysis_type = args["analysis_type"]
     logger.info("analysis begin in %s mode" %analysis_type)
     if args["analysis_type"]=="all":
-        hotcount_stda.ALL(design_dict,args["path"],args["filetype"], args["pvalue"], args["mutation"], args["sample"], args["controle"],args["depth"], args["IUPAC"], args["output"])
+        hotcount_stda.ALL(design_dict,args["path"],args["filetype"], args["pvalue"], args["mutation"], args["sample"], args["controle"],args["depth"], args["IUPAC"],args["nuctype"], args["output"])
     elif args["analysis_type"]=="count":
-        hotcount_stda.count(design_dict, args["path"], args["filetype"], args["IUPAC"], args["output"])
+        hotcount_stda.count(design_dict, args["path"], args["filetype"], args["IUPAC"],args["nuctype"], args["output"])
     else :
         hotcount_stda.stat(args["countfile"], args["pvalue"], args["sample"], args["mutation"], args["controle"], args["depth"], args["output"])
 

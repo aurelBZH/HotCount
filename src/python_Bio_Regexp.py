@@ -181,8 +181,35 @@ class regex_seq_finder(object):
 		if cpt_bracket !=0 or cpt_brace !=0 or cpt_parenthesis !=0:
 					raise Exception("anormal number of bracket brace or parenthesis")
 
+	def create_pattern(self,regexp, nuctype, IUPAC):
+		pattern = self.use_iupac(regexp, nuctype)
+		compiled_pattern =re.compile(pattern)
+		return compiled_pattern
 
-	def find_subseq(self, sequence, regex, IUPAC, number_of_match, position_of_match, match, nuctype="DNA", overlap=False):
+
+	def use_iupac(self, regexp, nuctype):
+		pattern=""
+		for nt in regexp:
+
+			# ipdb.set_trace()
+			if nt.isalpha():
+				if nuctype == "DNA":
+					value = IUPACData.ambiguous_dna_values[nt]
+					if len(value) == 1:
+						pattern += value
+					else:
+						pattern += '[%s]' % value
+				if nuctype == 'RNA':
+					value = IUPACData.ambiguous_rna_values[nt]
+					if len(value) == 1:
+						pattern += value
+					else:
+						pattern += '[%s]' % value
+			elif nt.isalpha() != True:
+				pattern += nt
+		return pattern
+
+	def find_subseq(self, sequence, regex,compiled, IUPAC, number_of_match, position_of_match, match, nuctype="DNA", overlap=False):
 		"""
 		a function to find a subsequence in a sequence based on a regex. This function
 		:param sequence:the sequence where to search the regular expression
@@ -203,49 +230,33 @@ class regex_seq_finder(object):
 		"""
 		self.sequence = sequence
 		self.nuctype = nuctype
-		self.regex_subseq = regex	
+
 		pattern = ""
 		cpt=0
-		if IUPAC:
-			for nt in self.regex_subseq:
-
-				# ipdb.set_trace()
-				if nt.isalpha() :
-					if nuctype == "DNA":
-						value = IUPACData.ambiguous_dna_values[nt]
-						if len(value) == 1:
-							pattern += value
-						else:
-							pattern += '[%s]' %value
-					if nuctype == 'RNA':
-						value = IUPACData.ambiguous_rna_values[nt]
-						if len(value) == 1:
-							pattern += value
-						else:
-							pattern += '[%s]' % value
-				elif nt.isalpha()!=True:
-					pattern += nt
+		if compiled !=True:
+			self.regex_subseq=regex
+			pattern = self.create_pattern(self.nuctype,regex,IUPAC)
 
 		else:
+			pattern=regex
+			self.regex_subseq = regex.pattern
 
-			pattern=self.regex_subseq
 		#ipdb.set_trace()
-		self.find_subseq_result.append(pattern)
-		compiled_pattern = re.compile(pattern)
+		self.find_subseq_result.append(self.regex_subseq)
 		if number_of_match == True:
-			self.find_subseq_result.append(len(compiled_pattern.findall(self.sequence,overlap)))
+			self.find_subseq_result.append(len(pattern.findall(self.sequence,overlap)))
 			return self.find_subseq_result
 
 		if match == True :
 			match_result = False
 			#ipdb.set_trace()
-			if compiled_pattern.search(self.sequence) :
+			if pattern.search(self.sequence) :
 				match_result =True
 			self.find_subseq_result.append(match_result)
 			return self.find_subseq_result
 
 		if position_of_match == True:
-			matches = compiled_pattern.finditer(self.sequence)
+			matches = pattern.finditer(self.sequence)
 			for match in matches :
 				self.find_subseq_result.append(match.start())
 			return self.find_subseq_result
