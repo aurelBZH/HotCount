@@ -137,42 +137,61 @@ def test_regex_reverse_complement4(reg):
 	assert reg.regex_reverse_complement(r"AT(ACC)CCT") == "AGG(GGT)AT" 
 
 def test_find_subseq(reg):
-	assert diff(reg.find_subseq("ATCTTTTTATTTCGCGCGGGGAAA",r"AW{1,10}(CG){1,10}",True, True, False, False), ['A[AT]{1,10}(CG){1,10}', 1]) == 0
+	pattern = reg.use_iupac(r"AW{1,10}(CG){1,10}", "DNA")
+
+	comp_pattern = re.compile(pattern)
+	assert diff(reg.find_subseq("ATCTTTTTATTTCGCGCGGGGAAA",comp_pattern,True,True, True, False, False), ['A[AT]{1,10}(CG){1,10}', 1]) == 0
 
 def test_find_subseq2(reg):
-	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATC",False, True, False, False), ["ATC", 3]) == 0
+	pattern = re.compile(r"ATC")
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", pattern,True,False, True, False, False), ["ATC", 3]) == 0
 
-def test_find_subseq2b(reg):
-	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATC",True, False, True, False), ['ATC', 0, 8, 18]) == 0
+def test_find_subseq2b_position_of_match(reg):
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATC",False,True, False, True, False), ['ATC', 0, 8, 18]) == 0
 
 def test_find_subseq2t(reg):
-	assert diff (reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATC",True, False, False, True), ["ATC", True]) == 0
+	assert diff (reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATC",False,True, False, False, True), ["ATC", True]) == 0
 
 
 def test_find_subseq3(reg):
-	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}",True, True, False, False), ["ATCT{1,12}", 2]) == 0
-
+	pattern = re.compile(r"ATCT{1,12}")
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", pattern,True,True, True, False, False), ["ATCT{1,12}", 2]) == 0
 
 
 def test_find_subseq3b(reg):
-	tmp = reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"ATCT{1,12}",True, False, False, True)
+	pattern = re.compile(r"ATCT{1,12}")
+	tmp = reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", pattern,True,True, False, False, True)
 	assert diff(tmp, ["ATCT{1,12}", True])== 0 	
 
 def test_find_subseq3t(reg):
-	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"AT(CT){1,12}", True, False, False, True), ["AT(CT){1,12}", True]) == 0
+	pattern = re.compile(r"AT(CT){1,12}")
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", pattern,True, True, False, False, True), ["AT(CT){1,12}", True]) == 0
 
 def test_find_subseq4(reg):
-	assert diff (reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"AT(CT){1,12}", False, True, False, False), ["AT(CT){1,12}", 2]) == 0
+	assert diff (reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"AT(CT){1,12}",False, False, True, False, False), ["AT(CT){1,12}", 2]) == 0
 
 def test_find_subseq4b(reg):
-	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"AT(CT){1,12}", False, False, True, False), ["AT(CT){1,12}", 0, 8]) == 0
+	pattern = reg.use_iupac(r"AT(CT){1,12}", "DNA")
+	comp_pattern = re.compile(pattern)
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", comp_pattern,True, False, False, True, False), ["AT(CT){1,12}", 0, 8]) == 0
 
 def test_find_subseq4t(reg):
-	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", r"AT(CT){1,12}", False, False, False, True),["AT(CT){1,12}", True]) == 0
+	pattern = re.compile(r"AT(CT){1,12}")
+	assert diff(reg.find_subseq("ATCTTTTTATCTCGCGCGATCGAAA", pattern,True, False, False, False, True),["AT(CT){1,12}", True]) == 0
 
+def test_use_IUPAC_for_w(reg):
+	assert reg.use_iupac(r"AW{1,11}A","DNA") == "A[AT]{1,11}A"
+
+
+def test_use_IUPAC_for_w(reg):
+	assert reg.use_iupac(r"RY{1,11}S","DNA") == "[AG][CT]{1,11}[CG]"
+
+def test_create(reg):
+	pattern=reg.create_pattern(r"RY{1,11}S","DNA",True )
+	assert pattern.pattern == "[AG][CT]{1,11}[CG]"
 
 # fonction utilisé pour comparer 2 tableau sans redondance 
-#utilisable dans la mesure ou les test ont connu 
+#utilisable dans la mesure ou les test ont une entrée connu
 #
 def diff(list1, list2):
 	"""	docstring pour diff  """
@@ -185,6 +204,6 @@ def diff(list1, list2):
 @pytest.fixture
 def reg():
 	return python_Bio_Regexp.regex_seq_finder()
-	
+
 
 

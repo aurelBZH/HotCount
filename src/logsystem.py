@@ -14,13 +14,13 @@ formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
 
 file_handler = RotatingFileHandler('hotcount.log', 'a', 1000000, 1)
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
 
 steam_handler = logging.StreamHandler()
-steam_handler.setLevel(logging.DEBUG)
+steam_handler.setLevel(logging.INFO)
 logger.addHandler(steam_handler)
 
 

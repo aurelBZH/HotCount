@@ -10,219 +10,243 @@ from logsystem import *
 import gzip
 import ipdb
 import re
-from multiprocessing import Process, Queue, TimeoutError
+from multiprocessing import Process, Queue, TimeoutError, current_process
 
 class Analysis(object):
-	"""
-	super class for analysisFQ and analysisBAM
-	"""
+    """
+    super class for analysisFQ and analysisBAM
+    """
 
-	def __init__(self):
-		self.file_list=[]
-		self.design_dict = ""
-		self.analyse_results = {}
-		self.file_extentions = []
+    def __init__(self):
+        self.file_list=[]
+        self.design_dict = ""
+        self.analyse_results = {}
+        self.file_extentions = []
 
-	def get_file(self, path):
-		"""
-		a method to get the file list from the path 
-		:param path: path where the file are stored
-		"""
-		for extention in self.file_extentions :
-			file_list = glob2.glob(path+extention)
-			if len(file_list) != 0 :
-					break
-		if len(file_list) == 0 :
-			raise Exception("the path is incorrect or the file extension "+
-		 		"is bad,in fact the program can't find the file ")
+    def get_file(self, path):
+        """
+        a method to get the file list from the path
+        :param path: path where the file are stored
+        """
+        for extention in self.file_extentions :
+            file_list = glob2.glob(path+extention)
+            if len(file_list) != 0 :
+                    break
+        if len(file_list) == 0 :
+            raise Exception("the path is incorrect or the file extension "+
+                "is bad,in fact the program can't find the file ")
 
-		self.file_list = file_list
-		return file_list
-		# pysam.AlignmentFile("ex1.bam", "rb")
-        
-	def count_read(design_dict, IUPAC):
-		"""
-		an abstract method
-		implemented in the subclass*
-		:param design_dict: the file with
-		"""
-		raise NotImplementedError
+        self.file_list = file_list
+        return file_list
 
+    def count_read(self,design_dict,nuctype, IUPAC):
+        """
+        an abstract method
+        implemented in the subclass*
+        :param design_dict: the file with
+        """
+        raise NotImplementedError
+
+    def create_regexp_dict(self, design_dict, nuctype, IUPAC):
+        """
+        a function to create a dictionnary of regexp with forwazr and reverse
+
+        :param design_dict: dictionnary of regex to treat
+        :param nuctype: type of nucleic acid
+        :param IUPAC: use of iupac data
+        :return: a dictionnary of regex with compressed regexp
+        """
+        logger.debug(design_dict)
+        regexp_dict = {}
+        for key , value in design_dict.iteritems():
+            regexp_dict[key]={}
+            regexp_dict[key]["forward"]=regex_seq_finder().create_pattern(value,nuctype,IUPAC)
+            regexp_dict[key]["reverse"] = regex_seq_finder().create_pattern(regex_seq_finder().regex_reverse(value), nuctype, IUPAC)
+        return regexp_dict
 
 class AnalysisFQ(Analysis):
-	"""
-	docstring for analysisFQ
-	a class inhériting from the analysis class allow to analyse FastQ file
-	"""
-	def __init__(self):
-		super(AnalysisFQ, self).__init__()
-		self.file_extentions = ['*.fq.*', '*.fastq','*.fq','*.FASTQ','*.fastq.gz', '.fq.gz', '.FASTQ.gz', ".FQ", ".FQ.gz"]
-		self.file_list=[]
-		self.analyse_results ={}
+    """
+    docstring for analysisFQ
+    a class inhériting from the analysis class allow to analyse FastQ file
+    """
+    def __init__(self):
+        super(AnalysisFQ, self).__init__()
+        self.file_extentions = ['*.fq.*', '*.fastq','*.fq','*.FASTQ','*.fastq.gz', '.fq.gz', '.FASTQ.gz', ".FQ", ".FQ.gz"]
+        self.file_list=[]
+        self.analyse_results ={}
+
+    def get_file(self, path):
+        """
+        this method use the super class method
+        :param path: path where the file are stored
+        """
+        self.file_list = super(AnalysisFQ, self).get_file(path)
+
+    def create_regexp_dict(self, design_dict, nuctype, IUPAC):
+        """
+
+        :param design_dict: dictionnary of regex
+        :param nuctype: nucleic acid
+        :param IUPAC: use of IUPAC code
+        :return:
+        """
+        regexp_dict=super(AnalysisFQ, self).create_regexp_dict(design_dict, nuctype, IUPAC)
+        return regexp_dict
+
+    def count_read(self, design_dict,nuctype, IUPAC):
+        """
+        this function parrallelise the parsing with multiprocess
+        :param design_dict: file containing the design regex
+        :param nuctype : type of nucleic acid
+        :param IUPAC : use IUPAC value or not
+        """
+        return_queue =Queue()
+        compiled_regexp_dict = self.create_regexp_dict(design_dict, nuctype, IUPAC)
+
+        procl = [Process(name=file, target=self.count_by_file, args=(compiled_regexp_dict, IUPAC, file, return_queue))for file in self.file_list]
+
+        for proc in procl:
+            proc.start()
+
+        for proc in procl:
+            proc.join()
+
+            name, value = return_queue.get(True)
+            self.analyse_results[name]= value
+
+        return self.analyse_results
 
 
-	def get_file(self, path):
-		"""
-		this method use the super class method
-		:param path: path where the file are stored
-		"""
-		self.file_list = super(AnalysisFQ, self).get_file(path)
+    def count_by_file(self, design_dict, IUPAC, file ,return_queue):
+        """
+        this method use pythonBioRegex library to count the number of match between
+        design regex and sequence in file in FastQ
+        :param design_dict: the hash of regexp to analyse
+        :param IUPAC: use or don't use IUPAC code
+        :param file: file name to treat
+        :param return_queue: a queue to return results
+        :return:
+        """
+        logger.info("treat %s" % file)
+        self.analyse_results[file] = {}
+        mutation_number_file_variant = {}
+        if file.endswith(".gz"):
+            fileContent = gzip.open(file, "rt")
 
+        elif file.endswith(".gz") != True:
+            fileContent = open(file, "rb")
+        records = list(SeqIO.parse(fileContent, "fastq"))
+        for name, design in design_dict.iteritems():
+            mutation_number_by_var_val = 0
+            mut_number = 0
+            for record in records:
+                tmp_mut = mut_number
 
-	def count_read(self, design_dict, IUPAC):
-		"""
-		this method use pythonBioRegex library to count the number of match between
-		design regex and sequence in file in FastQ
-		:param design_dict: file containing the design regex
-		:param IUPAC : use IUPAC value or not
-		"""
-		Queue(self.file_list)
-		for file in self.file_list:
-			mutation_number_file_variant = self.count_by_file( design_dict, IUPAC, file)
-			Process
-	# 		logger.info("treat %s"%file)
-	# 		self.analyse_results[file] = {}
-	# 		mutation_number_file_variant = {}
-	# 		if file.endswith(".gz") :
-	# 			fileContent =gzip.open(file, "rt")
-    #
-	# 		elif file.endswith(".gz")!=True :
-	# 			fileContent = open(file, "rb")
-	# 		records = list(SeqIO.parse(fileContent, "fastq"))
-	# 		for name, design in design_dict.iteritems():
-	# 			mutation_number_by_var_val = 0
-	# 			reverse_design = regex_seq_finder().regex_reverse_complement(design)
-	# 			mut_number = 0
-	# 			for record in records :
-	# 				tmp_mut = mut_number
-	# 				if (regex_seq_finder().find_subseq(str(record.seq),design,IUPAC,False, False, True)[1] and mut_number-1!=tmp_mut) or (regex_seq_finder().find_subseq(str(record.seq),reverse_design,IUPAC,False, False, True)[1] and mut_number-1!=tmp_mut):
-	# 					mut_number = mut_number+1
-	# #						elif regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1] & mut_number-1==tmp_mut:
-	# #							mut_number = mut_number+1
-	# 			mutation_number_by_var_val= mutation_number_by_var_val + mut_number
-	# 			mutation_number_file_variant[name] = mutation_number_by_var_val
+                if (regex_seq_finder().find_subseq(str(record.seq), design["forward"],True, IUPAC, False, False, True)[
+                        1] and mut_number - 1 != tmp_mut) or (
+                    regex_seq_finder().find_subseq(str(record.seq), design["reverse"], True, IUPAC, False, False, True)[
+                        1] and mut_number - 1 != tmp_mut):
+                    mut_number = mut_number + 1
+            mutation_number_by_var_val = mutation_number_by_var_val + mut_number
+            mutation_number_file_variant[name] = mutation_number_by_var_val
+        logger.debug("end of count %s"%file)
 
-			self.analyse_results[file] = mutation_number_file_variant
-		return self. analyse_results
-
-	def count_by_file(self, design_dict, IUPAC, file):
-		logger.info("treat %s" % file)
-		self.analyse_results[file] = {}
-		mutation_number_file_variant = {}
-		if file.endswith(".gz"):
-			fileContent = gzip.open(file, "rt")
-
-		elif file.endswith(".gz") != True:
-			fileContent = open(file, "rb")
-		records = list(SeqIO.parse(fileContent, "fastq"))
-		for name, design in design_dict.iteritems():
-			mutation_number_by_var_val = 0
-			reverse_design = regex_seq_finder().regex_reverse_complement(design)
-			mut_number = 0
-			for record in records:
-				tmp_mut = mut_number
-				if (regex_seq_finder().find_subseq(str(record.seq), design, IUPAC, False, False, True)[
-						1] and mut_number - 1 != tmp_mut) or (
-					regex_seq_finder().find_subseq(str(record.seq), reverse_design, IUPAC, False, False, True)[
-						1] and mut_number - 1 != tmp_mut):
-					mut_number = mut_number + 1
-				#						elif regex_seq_finder().find_subseq(str(record.seq),reverse_design,False, False, True)[1] & mut_number-1==tmp_mut:
-				#							mut_number = mut_number+1
-			mutation_number_by_var_val = mutation_number_by_var_val + mut_number
-			mutation_number_file_variant[name] = mutation_number_by_var_val
-			return mutation_number_file_variant
+        return_queue.put((current_process().name,mutation_number_file_variant))
 
 class AnalysisBAM(Analysis):
-	"""
-	docstring for analysisBAM
-	a class inhériting from the analysis class allow to analyse BAM
+    """
+    docstring for analysisBAM
+    a class inhériting from the analysis class allow to analyse BAM
 
-	"""
-	def __init__(self):
-		super(AnalysisBAM, self).__init__()
-		self.file_extentions = ['*.bam','*.BAM']
-		self.file_list=[]
-		self.analyse_results = {}
+    """
+    def __init__(self):
+        super(AnalysisBAM, self).__init__()
+        self.file_extentions = ['*.bam','*.BAM']
+        self.file_list=[]
+        self.analyse_results = {}
 
 
-		
-	def get_file(self, path ):
-		"""
-		this method use the super class method
-		:param path: path where the file are stored
-		"""
 
-		self.file_list = super(AnalysisBAM, self).get_file(path)
+    def get_file(self, path ):
+        """
+        this method use the super class method
+        :param path: path where the file are stored
+        """
 
-	def count_read(self, design_dict, IUPAC):
-		"""
-		this method use pythonBioRegex library to count the number of match between
-		design regex and sequence in file in BAM
-		:param design_dict: file containing the design regex
-		"""
-		read_set = set()
-		for file in self.file_list:
-			mutation_number_file_variant = self.count_by_file(design_dict, IUPAC,file)
-			#samfile = pysam.AlignmentFile(file)
-			#logger.info("treat %s"%file)
-			#self.analyse_results[file] = {}
-			#mutation_number_file_variant = {}
-			#for name, design in design_dict.iteritems():
-			#	mutation_number_by_var_val = 0
-			#	reverse_design = regex_seq_finder().regex_reverse_complement(design)
-			#	mut_number = 0
-			#	for read in samfile.fetch(until_eof=True):
-#
-					#str_read=str(read).split("\t")
+        self.file_list = super(AnalysisBAM, self).get_file(path)
 
-					#if str_read[0] not in read_set:
-					#	logger.debug(re.match(design, str_read[9]))
-					#	logger.debug(design)
-					#	logger.debug(str_read[9])
-					#	ipdb.set_trace()
-					#	if regex_seq_finder().find_subseq(str(str_read[9]),design,IUPAC,False, False, True)[1]:
-					#		logger.debug(str_read[9])
-					#		ipdb.set_trace()
+    def create_regexp_dict(self, design_dict, nuctype, IUPAC):
+        regexp_dict = super(AnalysisBAM, self).create_regexp_dict(design_dict, nuctype, IUPAC)
+        return regexp_dict
 
-					#		mut_number = mut_number+1
-					#	elif regex_seq_finder().find_subseq(str(str_read[9]),reverse_design, IUPAC,False, False, True)[1]:
-					#		mut_number = mut_number+1
-					#read_set.add(str_read[0])
-				#mutation_number_by_var_val = mutation_number_by_var_val + mut_number
-				#mutation_number_file_variant[name] = mutation_number_by_var_val
-			self.analyse_results[file] = mutation_number_file_variant
-		return self. analyse_results
 
-	def count_by_file(self, design_dict, IUPAC, file, read_set):
-		samfile = pysam.AlignmentFile(file)
-		logger.info("treat %s" % file)
-		self.analyse_results[file] = {}
-		mutation_number_file_variant = {}
-		for name, design in design_dict.iteritems():
-			mutation_number_by_var_val = 0
-			reverse_design = regex_seq_finder().regex_reverse_complement(design)
-			mut_number = 0
-			for read in samfile.fetch(until_eof=True):
+    def count_read(self, design_dict, IUPAC):
+        """
+        this method use pythonBioRegex library to count the number of match between
+        design regex and sequence in file in BAM
+        :param design_dict: file containing the design regex
+        """
+        read_set = set()
+        for file in self.file_list:
+            mutation_number_file_variant = self.count_by_file(design_dict, IUPAC,file, read_set)
+            #samfile = pysam.AlignmentFile(file)
+            #logger.info("treat %s"%file)
+            #self.analyse_results[file] = {}
+            #mutation_number_file_variant = {}
+            #for name, design in design_dict.iteritems():
+            #	mutation_number_by_var_val = 0
+            #	reverse_design = regex_seq_finder().regex_reverse_complement(design)
+            #	mut_number = 0
+            #	for read in samfile.fetch(until_eof=True):
+    #
+                    #str_read=str(read).split("\t")
 
-				str_read = str(read).split("\t")
+                    #if str_read[0] not in read_set:
+                    #	logger.debug(re.match(design, str_read[9]))
+                    #	logger.debug(design)
+                    #	logger.debug(str_read[9])
+                    #	ipdb.set_trace()
+                    #	if regex_seq_finder().find_subseq(str(str_read[9]),design,IUPAC,False, False, True)[1]:
+                    #		logger.debug(str_read[9])
+                    #		ipdb.set_trace()
 
-				if str_read[0] not in read_set:
-					logger.debug(re.match(design, str_read[9]))
-					logger.debug(design)
-					logger.debug(str_read[9])
-					ipdb.set_trace()
-					if regex_seq_finder().find_subseq(str(str_read[9]), design, IUPAC, False, False, True)[1]:
-						logger.debug(str_read[9])
-						ipdb.set_trace()
+                    #		mut_number = mut_number+1
+                    #	elif regex_seq_finder().find_subseq(str(str_read[9]),reverse_design, IUPAC,False, False, True)[1]:
+                    #		mut_number = mut_number+1
+                    #read_set.add(str_read[0])
+                #mutation_number_by_var_val = mutation_number_by_var_val + mut_number
+                #mutation_number_file_variant[name] = mutation_number_by_var_val
+            self.analyse_results[file] = mutation_number_file_variant
+        return self. analyse_results
 
-						mut_number = mut_number + 1
-					elif regex_seq_finder().find_subseq(str(str_read[9]), reverse_design, IUPAC, False, False, True)[1]:
-						mut_number = mut_number + 1
-				read_set.add(str_read[0])
-			mutation_number_by_var_val = mutation_number_by_var_val + mut_number
-			mutation_number_file_variant[name] = mutation_number_by_var_val
+    def count_by_file(self, design_dict, IUPAC, file, read_set):
+        samfile = pysam.AlignmentFile(file)
+        logger.info("treat %s" % file)
+        self.analyse_results[file] = {}
+        mutation_number_file_variant = {}
+        for name, design in design_dict.iteritems():
+            mutation_number_by_var_val = 0
+            reverse_design = regex_seq_finder().regex_reverse_complement(design)
+            mut_number = 0
+            for read in samfile.fetch(until_eof=True):
 
-			return mutation_number_by_var_val
+                str_read = str(read).split("\t")
+
+                if str_read[0] not in read_set:
+                    logger.debug(re.match(design, str_read[9]))
+                    logger.debug(design)
+                    logger.debug(str_read[9])
+                    if regex_seq_finder().find_subseq(str(str_read[9]), design, IUPAC, False, False, True)[1]:
+                        logger.debug(str_read[9])
+
+                        mut_number = mut_number + 1
+                    elif regex_seq_finder().find_subseq(str(str_read[9]), reverse_design, IUPAC, False, False, True)[1]:
+                        mut_number = mut_number + 1
+                read_set.add(str_read[0])
+            mutation_number_by_var_val = mutation_number_by_var_val + mut_number
+            mutation_number_file_variant[name] = mutation_number_by_var_val
+
+            return mutation_number_by_var_val
 
 
 class statistics(object):

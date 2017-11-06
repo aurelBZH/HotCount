@@ -182,12 +182,26 @@ class regex_seq_finder(object):
 					raise Exception("anormal number of bracket brace or parenthesis")
 
 	def create_pattern(self,regexp, nuctype, IUPAC):
+		"""
+		a function to transform iupac value and compress regexp to a
+		re object
+		:param regexp: regular expression to compress
+		:param nuctype: type of nucleic acid
+		:param IUPAC: use or not of IUPAC code
+		:return: return compressed regular expression
+		"""
 		pattern = self.use_iupac(regexp, nuctype)
 		compiled_pattern =re.compile(pattern)
 		return compiled_pattern
 
 
 	def use_iupac(self, regexp, nuctype):
+		"""
+
+		:param regexp: the regular expression to modify IUPAC
+		:param nuctype: type of nucleic acid
+		:return: regular expression with iupac data modified
+		"""
 		pattern=""
 		for nt in regexp:
 
@@ -214,6 +228,7 @@ class regex_seq_finder(object):
 		a function to find a subsequence in a sequence based on a regex. This function
 		:param sequence:the sequence where to search the regular expression
 		:param regex: the regular expression to find
+		:param compiled : boolean value to say if the regex is compiled or not
 		:param IUPAC : usage of iupac code
 		:param number_of_match: a param to set the method to return the number of match between regular expression and sequence
 		:param position _of_match: a param to set the method for returning the matching position
@@ -228,6 +243,8 @@ class regex_seq_finder(object):
 		:type overlap: boolean
 
 		"""
+
+		#ipdb.set_trace()
 		self.sequence = sequence
 		self.nuctype = nuctype
 
@@ -235,14 +252,14 @@ class regex_seq_finder(object):
 		cpt=0
 		if compiled !=True:
 			self.regex_subseq=regex
-			pattern = self.create_pattern(self.nuctype,regex,IUPAC)
+			pattern = self.create_pattern(regex,self.nuctype,IUPAC)
 
 		else:
 			pattern=regex
 			self.regex_subseq = regex.pattern
 
 		#ipdb.set_trace()
-		self.find_subseq_result.append(self.regex_subseq)
+		self.find_subseq_result.append(pattern.pattern)
 		if number_of_match == True:
 			self.find_subseq_result.append(len(pattern.findall(self.sequence,overlap)))
 			return self.find_subseq_result
