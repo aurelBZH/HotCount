@@ -135,16 +135,16 @@ class AnalysisFQ(Analysis):
 
         elif file.endswith(".gz") != True:
             fileContent = open(file, "rb")
-        records = list(SeqIO.parse(fileContent, "fastq"))
+        records = list(SeqIO.QualityIO.FastqGeneralIterator(fileContent))
         for name, design in design_dict.iteritems():
             mutation_number_by_var_val = 0
             mut_number = 0
             for record in records:
                 tmp_mut = mut_number
 
-                if (regex_seq_finder().find_subseq(str(record.seq), design["forward"],True, IUPAC, False, False, True)[
+                if (regex_seq_finder().find_subseq(str(record), design["forward"],True, IUPAC, False, False, True)[
                         1] and mut_number - 1 != tmp_mut) or (
-                    regex_seq_finder().find_subseq(str(record.seq), design["reverse"], True, IUPAC, False, False, True)[
+                    regex_seq_finder().find_subseq(str(record), design["reverse"], True, IUPAC, False, False, True)[
                         1] and mut_number - 1 != tmp_mut):
                     mut_number = mut_number + 1
             mutation_number_by_var_val = mutation_number_by_var_val + mut_number
