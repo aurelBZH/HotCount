@@ -10,7 +10,7 @@ from logsystem import *
 import gzip
 import ipdb
 import re
-from multiprocessing import Process, Queue, TimeoutError, current_process
+from multiprocessing import Process, Queue, TimeoutError, current_process, cpu_count
 
 class Analysis(object):
     """
