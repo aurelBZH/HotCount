@@ -63,8 +63,8 @@ class Analysis(object):
         regexp_dict = {}
         for key , value in design_dict.iteritems():
             regexp_dict[key]={}
-            regexp_dict[key]["forward"]=regex_seq_finder().create_pattern(value,nuctype,IUPAC)
-            regexp_dict[key]["reverse"] = regex_seq_finder().create_pattern(regex_seq_finder().regex_reverse(value), nuctype, IUPAC)
+            regexp_dict[key]["forward"]=python_Bio_Regexp.regex_seq_finder().create_pattern(value,nuctype,IUPAC)
+            regexp_dict[key]["reverse"] = python_Bio_Regexp.regex_seq_finder().create_pattern(python_Bio_Regexp.regex_seq_finder().regex_reverse(value), nuctype, IUPAC)
         return regexp_dict
 
 class AnalysisFQ(Analysis):
@@ -113,9 +113,10 @@ class AnalysisFQ(Analysis):
 
         for proc in procl:
             proc.join()
-
+            logger.debug("end of count %s" % proc.name)
             name, value = return_queue.get(True)
             self.analyse_results[name]= value
+
 
         return self.analyse_results
 
@@ -145,14 +146,13 @@ class AnalysisFQ(Analysis):
             for record in records:
                 tmp_mut = mut_number
 
-                if (regex_seq_finder().find_subseq(str(record), design["forward"],True, IUPAC, False, False, True)[
+                if (python_Bio_Regexp.regex_seq_finder().find_subseq(str(record), design["forward"],True, IUPAC, False, False, True)[
                         1] and mut_number - 1 != tmp_mut) or (
-                    regex_seq_finder().find_subseq(str(record), design["reverse"], True, IUPAC, False, False, True)[
+                            python_Bio_Regexp.regex_seq_finder().find_subseq(str(record), design["reverse"], True, IUPAC, False, False, True)[
                         1] and mut_number - 1 != tmp_mut):
                     mut_number = mut_number + 1
             mutation_number_by_var_val = mutation_number_by_var_val + mut_number
             mutation_number_file_variant[name] = mutation_number_by_var_val
-        logger.debug("end of count %s"%file)
 
         return_queue.put((current_process().name,mutation_number_file_variant))
 
