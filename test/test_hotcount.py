@@ -1,7 +1,6 @@
 #/usr/bin/python
 # coding: utf-8 
 import pytest
-from src import python_Bio_Regexp
 from src import hotcount
 from src import hotcount_standalone
 

@@ -1,16 +1,19 @@
 #/usr/bin/env python 2.7
 # coding: utf-8 
 from __future__ import print_function
-from Bio import SeqIO
-import glob2
-import pysam
-import scipy.stats as stats
-from python_Bio_Regexp import *
-from logsystem import *
+
 import gzip
+from multiprocessing import Process, Queue, current_process
+
+import glob2
 import ipdb
-import re
-from multiprocessing import Process, Queue, TimeoutError, current_process, cpu_count
+import scipy.stats as stats
+from Bio import SeqIO
+
+from lib.python_bio_regexp.src import python_Bio_Regexp
+from logsystem import *
+from src.lib.pybam.src import pybam
+
 
 class Analysis(object):
     """
