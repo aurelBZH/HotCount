@@ -2,7 +2,6 @@
 # coding: utf-8 
 import pytest
 import os 
-from src import python_Bio_Regexp
 from src import hotcount_standalone
 
 
