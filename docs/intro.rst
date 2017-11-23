@@ -22,7 +22,7 @@ and several way of research of regular expression in sequence string
 
 downlaoding
 ===========
-you can download our application from github or conda
+you can download our application from github https://github.com/aurelBZH/HotCount
 
 Installation
 ============

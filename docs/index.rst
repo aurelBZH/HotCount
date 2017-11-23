@@ -10,6 +10,7 @@ Welcome to hotcount remastered's documentation!
    :maxdepth: 2
    :caption: Contents:
     intro
+    installation
 	functionment
 	standalone
 
