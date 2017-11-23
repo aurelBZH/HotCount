@@ -182,73 +182,41 @@ class AnalysisBAM(Analysis):
         return regexp_dict
 
 
-    def count_read(self, design_dict, IUPAC):
+    def count_read(self, design_dict, nuctype, IUPAC):
         """
         this method use pythonBioRegex library to count the number of match between
         design regex and sequence in file in BAM
         :param design_dict: file containing the design regex
         """
+        compiled_regexp_dict = self.create_regexp_dict(design_dict, nuctype, IUPAC)
         read_set = set()
         for file in self.file_list:
-            mutation_number_file_variant = self.count_by_file(design_dict, IUPAC,file, read_set)
-            #samfile = pysam.AlignmentFile(file)
-            #logger.info("treat %s"%file)
-            #self.analyse_results[file] = {}
-            #mutation_number_file_variant = {}
-            #for name, design in design_dict.iteritems():
-            #	mutation_number_by_var_val = 0
-            #	reverse_design = regex_seq_finder().regex_reverse_complement(design)
-            #	mut_number = 0
-            #	for read in samfile.fetch(until_eof=True):
-    #
-                    #str_read=str(read).split("\t")
+            mutation_number_file_variant = self.count_by_file(compiled_regexp_dict, IUPAC,file, read_set)
 
-                    #if str_read[0] not in read_set:
-                    #	logger.debug(re.match(design, str_read[9]))
-                    #	logger.debug(design)
-                    #	logger.debug(str_read[9])
-                    #	ipdb.set_trace()
-                    #	if regex_seq_finder().find_subseq(str(str_read[9]),design,IUPAC,False, False, True)[1]:
-                    #		logger.debug(str_read[9])
-                    #		ipdb.set_trace()
-
-                    #		mut_number = mut_number+1
-                    #	elif regex_seq_finder().find_subseq(str(str_read[9]),reverse_design, IUPAC,False, False, True)[1]:
-                    #		mut_number = mut_number+1
-                    #read_set.add(str_read[0])
-                #mutation_number_by_var_val = mutation_number_by_var_val + mut_number
-                #mutation_number_file_variant[name] = mutation_number_by_var_val
             self.analyse_results[file] = mutation_number_file_variant
         return self. analyse_results
 
     def count_by_file(self, design_dict, IUPAC, file, read_set):
-        samfile = pysam.AlignmentFile(file)
+
         logger.info("treat %s" % file)
         self.analyse_results[file] = {}
         mutation_number_file_variant = {}
         for name, design in design_dict.iteritems():
             mutation_number_by_var_val = 0
-            reverse_design = regex_seq_finder().regex_reverse_complement(design)
             mut_number = 0
-            for read in samfile.fetch(until_eof=True):
-
-                str_read = str(read).split("\t")
-
-                if str_read[0] not in read_set:
-                    logger.debug(re.match(design, str_read[9]))
-                    logger.debug(design)
-                    logger.debug(str_read[9])
-                    if regex_seq_finder().find_subseq(str(str_read[9]), design, IUPAC, False, False, True)[1]:
-                        logger.debug(str_read[9])
+            for read, qname in pybam.read(file, ['sam_seq', 'sam_qname']):
+                if qname not in read_set:
+                    if python_Bio_Regexp.regex_seq_finder().find_subseq(read, design["forward"],True, IUPAC, False, False, True)[1]:
+                        logger.debug(read)
 
                         mut_number = mut_number + 1
-                    elif regex_seq_finder().find_subseq(str(str_read[9]), reverse_design, IUPAC, False, False, True)[1]:
+                    elif python_Bio_Regexp.regex_seq_finder().find_subseq(read, design["reverse"],True, IUPAC, False, False, True)[1]:
                         mut_number = mut_number + 1
-                read_set.add(str_read[0])
+                read_set.add(qname)
             mutation_number_by_var_val = mutation_number_by_var_val + mut_number
             mutation_number_file_variant[name] = mutation_number_by_var_val
 
-            return mutation_number_by_var_val
+        return mutation_number_file_variant
 
 
 class statistics(object):
