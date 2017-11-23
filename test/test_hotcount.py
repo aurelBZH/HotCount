@@ -63,7 +63,7 @@ def diff(list1, list2):
 	"""	
 	docstring pour diff 
 	function used to compare 2 list without redundancy 
-	usable for test with known input 
+	usable for test with known input
 
 	 """
 	c = set(list1).union(set(list2))
