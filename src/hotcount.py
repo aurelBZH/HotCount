@@ -6,7 +6,6 @@ import gzip
 from multiprocessing import Process, Queue, current_process
 
 import glob2
-import ipdb
 import scipy.stats as stats
 from Bio import SeqIO
 
