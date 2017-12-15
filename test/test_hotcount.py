@@ -28,7 +28,7 @@ def test_count2():
 	FQanalyse = hotcount.AnalysisFQ()
 	FQanalyse.get_file("resources/testfile/asxl1/file1gz/")
 	analyse_result = FQanalyse.count_read({'all': 'ATCGGAGGG.*GGGTGGCCC', 'wt': 'ATCGGAGGGGGGGGTGGCCC', 'delg': 'ATCGGAGGGGGGGTGGCCC'},"DNA",False)
-	assert diff(analyse_result, {'resources/testfile/asxl1/file1gz/TS_L251a_21_Ampliseq_2014-11-14.fastq.gz': {'all': 550, 'delg': 24, 'wt': 282}}) == 0
+	assert diff(analyse_result, {'resources/testfile/asxl1/file1gz/file1.fastq.gz': {'all': 550, 'delg': 24, 'wt': 282}}) == 0
 
 def test_all():
 	pass

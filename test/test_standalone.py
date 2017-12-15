@@ -13,10 +13,17 @@ def test_writetofile(tmpdir):
 		assert file.readline() == 'sample,all,wt,delg\r\n'
 
 def test_to_dict():
-	assert diff(hotcount_standalone.to_dict("/home/aurelien/HotCount_project/hotCount_remastered/resources/testfile/test2.txt"), {'/home/aurelien/HotCount_project/hotcount/data/asxl1/dupG_Pos/TS_L251a_21_Ampliseq_2014-11-14.fastq': {'all': '750', 'delg': '420', 'wt': '140'},"/home/aurelien/HotCount_project/hotcount/data/asxl1/dupG_Pos/TS_L1095a_055_Ampliseq_AML_201-12-22.fastq":{'all':'317','delg':'151','wt':'22'}})==0
+	assert diff(hotcount_standalone.to_dict("resources/testfile/test2.txt"),
+				{'resources/testfile/test2.txt': {'all': '750', 'delg': '420', 'wt': '140'},"/home/aurelien/HotCount_project/hotcount/data/asxl1/dupG_Pos/TS_L1095a_055_Ampliseq_AML_201-12-22.fastq":{'all':'317','delg':'151','wt':'22'}})==0
 
 
-
+def test_count():
+    
+    with open(file, 'r') as file:
+        assert()
+def test_stat():
+    pass
+def test_all()
 
 
 
